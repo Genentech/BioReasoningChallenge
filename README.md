@@ -72,24 +72,75 @@ See [`kaggle_data_description.md`](kaggle_data_description.md) for full data doc
 - **Not allowed**: Tools, web access, or external models during inference
 - **Submission**: `submission.csv` + `prompt.txt` in a zip
 
+## Example Scripts
+
+### Track A -- `examples/track_a_prompt_only.py`
+
+Calls the LLM with 3 seeds (42, 43, 44), averages the predictions, and packages a zip.
+
+```bash
+# Default: uses mlgenx built-in prompts
+python examples/track_a_prompt_only.py --api-base http://your-api/v1 --api-key YOUR_KEY
+
+# Use a custom prompt template (placeholders: {pert}, {gene}, {task}, {cell_desc})
+python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
+
+# Use a CSV/JSONL of pre-written per-row prompts (columns: id, prompt)
+python examples/track_a_prompt_only.py --prompts-csv examples/example_prompts.csv ...
+```
+
+See `examples/prompt_template.txt` and `examples/example_prompts.csv` for input format examples.
+
+### Track B -- `examples/track_b_agentic.py`
+
+Runs an agentic loop where the LLM can call tools between reasoning steps.
+
+```bash
+python examples/track_b_agentic.py --api-base http://your-api/v1 --api-key YOUR_KEY
+```
+
+Three example tools are provided in `examples/tools/`:
+
+| Tool | Source | Description |
+|------|--------|-------------|
+| `train_data_lookup` | Local `train.csv` | Look up known labels for a perturbation or gene |
+| `gene_info` | [mygene.info](https://mygene.info) API | Retrieve gene annotations (summary, GO terms, pathways) |
+| `protein_interactions` | [STRING DB](https://string-db.org) API | Query protein-protein interaction partners |
+
+### Track C -- `examples/finetune.py` + `examples/track_c_finetune.py`
+
+Track C is a two-step workflow:
+
+**Step 1: Fine-tune** (run once)
+
+```bash
+python examples/finetune.py \
+    --train-csv data/train.csv \
+    --model Qwen/Qwen3-4B-Thinking-2507 \
+    --output outputs/finetuned_model \
+    --epochs 3 --lr 2e-4 --lora-r 16
+```
+
+This produces a merged LoRA model in `outputs/finetuned_model/`.
+
+**Step 2: Serve and run inference**
+
+```bash
+# Serve with vLLM
+vllm serve outputs/finetuned_model --port 8000
+
+# Generate predictions
+python examples/track_c_finetune.py \
+    --api-base http://localhost:8000/v1 \
+    --model outputs/finetuned_model \
+    --base-model Qwen/Qwen3-4B-Thinking-2507
+```
+
 ## How to Submit
 
 ### Step 1: Generate predictions
 
-Use the provided example scripts or write your own:
-
-```bash
-# Track A
-python examples/track_a_prompt_only.py --api-base http://your-api/v1 --api-key YOUR_KEY
-
-# Track B
-python examples/track_b_agentic.py --api-base http://your-api/v1 --api-key YOUR_KEY
-
-# Track C
-python examples/track_c_finetune.py --api-base http://localhost:8000/v1
-```
-
-Each script outputs a zip file ready for Kaggle upload.
+Use the example scripts above or write your own. Each script outputs a zip file ready for Kaggle upload.
 
 ### Step 2: Verify your submission
 
@@ -101,7 +152,7 @@ Each track requires specific columns in `submission.csv`:
 
 **Track C** columns: `id, prediction, reasoning_trace, tokens_used, model_name`
 
-The `id` column must match every row in `test.csv` exactly. Only `id` and `prediction` are used for scoring; all other columns are required metadata.
+The `id` column must match every row in `test.csv` exactly. Only `id` and `prediction` are used for scoring; all other columns are required metadata. **Submissions missing required metadata columns will receive a score of 0.**
 
 ### Step 3: Package into a zip
 
@@ -137,9 +188,7 @@ For each target gene, AUROC is computed over all perturbations that include that
 - Random baseline (all 0.5): ~0.5
 - Perfect model: 1.0
 
-The leaderboard also displays (for transparency, not ranking):
-- **Total tokens used** (all tracks)
-- **Total tool calls** (Track B only)
+Submissions that omit required metadata columns (reasoning traces, token counts, etc.) will score **0.0**.
 
 ## Quick Start
 
