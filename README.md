@@ -1,4 +1,4 @@
-# BioReasoning Challenge -- MLGenX PerturbPair Competition
+# BioReasoning Challenge -- MLGenX LLM Perturbation Competition
 
 Predict gene expression changes from CRISPRi perturbations in mouse bone marrow-derived macrophages (BMDMs).
 
