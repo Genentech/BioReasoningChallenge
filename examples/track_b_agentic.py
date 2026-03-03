@@ -1,15 +1,20 @@
 """
 Track B -- Agentic tool-use baseline.
 
-Demonstrates a simple agent loop where the LLM can call tools before
-producing a final answer. Ships with a placeholder ``gene_lookup`` tool
-that participants should replace with their own.
+Runs an agent loop where the LLM can call biological tools before producing
+a final answer.  Ships with three working tools:
+
+  1. train_data_lookup  -- query competition training data (local, no network)
+  2. gene_info          -- fetch gene annotations from mygene.info (public API)
+  3. protein_interactions -- fetch protein-protein interactions from STRING DB
+
+Participants should extend or replace these with their own tools.
 
 Usage:
     pip install -e .   # from repo root -- installs mlgenx
-    python examples/track_b_agentic.py \
-        --api-base http://your-endpoint/v1 \
-        --api-key YOUR_KEY \
+    python examples/track_b_agentic.py \\
+        --api-base http://your-endpoint/v1 \\
+        --api-key YOUR_KEY \\
         --model GPT-OSS-120B
 """
 
@@ -17,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import time
@@ -34,31 +38,97 @@ from mlgenx.prompts import CELL_DESC, _PROMPT_DE_ZERO, _PROMPT_DIR_ZERO
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_CSV = ROOT / "data" / "test.csv"
-TOOLS_DIR = ROOT / "examples" / "tools"
+TRAIN_CSV = ROOT / "data" / "train.csv"
 
 MAX_TOOL_CALLS_PER_ROW = 250
 
+# Cache the training data in-memory once (lazy-loaded)
+_TRAIN_DF: pd.DataFrame | None = None
+
+
+def _get_train_df() -> pd.DataFrame:
+    global _TRAIN_DF
+    if _TRAIN_DF is None:
+        _TRAIN_DF = pd.read_csv(TRAIN_CSV)
+    return _TRAIN_DF
+
 
 # ---------------------------------------------------------------------------
-# Tool definitions -- replace / extend with your own
+# Tool definitions (OpenAI function-calling format)
 # ---------------------------------------------------------------------------
 
 TOOL_DEFINITIONS: List[Dict[str, Any]] = [
     {
         "type": "function",
         "function": {
-            "name": "gene_lookup",
+            "name": "train_data_lookup",
             "description": (
-                "Look up basic information about a mouse gene, including known "
-                "pathways and Gene Ontology terms. Returns a short text summary."
+                "Search the competition training data for labeled examples "
+                "involving a specific perturbation and/or gene.  Returns "
+                "matching rows with their task type and ground-truth label."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pert": {
+                        "type": "string",
+                        "description": (
+                            "Perturbation gene symbol to search for "
+                            "(e.g. 'Stat1'). Optional if gene is provided."
+                        ),
+                    },
+                    "gene": {
+                        "type": "string",
+                        "description": (
+                            "Target gene symbol to search for "
+                            "(e.g. 'Irf1'). Optional if pert is provided."
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "gene_info",
+            "description": (
+                "Look up annotations for a mouse gene from mygene.info, "
+                "including gene name, summary, Gene Ontology biological "
+                "process terms, and KEGG pathways."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "gene_symbol": {
                         "type": "string",
-                        "description": "Mouse gene symbol, e.g. 'Aars'",
-                    }
+                        "description": "Mouse gene symbol (e.g. 'Stat1').",
+                    },
+                },
+                "required": ["gene_symbol"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "protein_interactions",
+            "description": (
+                "Fetch known protein-protein interactions for a mouse gene "
+                "from STRING DB.  Returns up to 10 interaction partners "
+                "with combined confidence scores."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "gene_symbol": {
+                        "type": "string",
+                        "description": "Mouse gene symbol (e.g. 'Stat1').",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max number of interaction partners (default 10).",
+                    },
                 },
                 "required": ["gene_symbol"],
             },
@@ -67,19 +137,133 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
 ]
 
 
-def execute_tool(name: str, arguments: dict) -> str:
-    """
-    Dispatch a tool call and return the result as a string.
+# ---------------------------------------------------------------------------
+# Tool implementations
+# ---------------------------------------------------------------------------
 
-    Participants: add your own tools here. Each tool should accept a dict of
-    arguments and return a plain-text result string.
-    """
-    if name == "gene_lookup":
-        symbol = arguments.get("gene_symbol", "unknown")
-        return (
-            f"{symbol}: This is a placeholder response. Replace the "
-            f"gene_lookup tool with a real implementation that queries "
-            f"your gene annotation database."
+def tool_train_data_lookup(pert: str | None = None, gene: str | None = None) -> str:
+    """Query competition training data for matching rows."""
+    if not pert and not gene:
+        return "Error: provide at least one of 'pert' or 'gene'."
+
+    df = _get_train_df()
+    mask = pd.Series(True, index=df.index)
+    if pert:
+        mask &= df["pert"].str.lower() == pert.lower()
+    if gene:
+        mask &= df["gene"].str.lower() == gene.lower()
+
+    hits = df[mask]
+    if hits.empty:
+        parts = []
+        if pert:
+            parts.append(f"pert={pert}")
+        if gene:
+            parts.append(f"gene={gene}")
+        return f"No training examples found for {', '.join(parts)}."
+
+    lines = [f"Found {len(hits)} training example(s):"]
+    for _, r in hits.iterrows():
+        label_str = {
+            ("de", 0): "no differential expression",
+            ("de", 1): "differential expression",
+            ("dir", 0): "down-regulated",
+            ("dir", 1): "up-regulated",
+        }.get((r["task"], r["label"]), str(r["label"]))
+        lines.append(
+            f"  - pert={r['pert']}, gene={r['gene']}, task={r['task']}, "
+            f"label={r['label']} ({label_str})"
+        )
+    return "\n".join(lines)
+
+
+def tool_gene_info(gene_symbol: str) -> str:
+    """Fetch gene annotations from mygene.info."""
+    url = (
+        f"https://mygene.info/v3/query?"
+        f"q=symbol:{gene_symbol}&species=mouse"
+        f"&fields=symbol,name,summary,go.BP,pathway.kegg&size=1"
+    )
+    try:
+        req = urllib.request.Request(url)
+        req.add_header("Accept", "application/json")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as e:
+        return f"Error querying mygene.info for {gene_symbol}: {e}"
+
+    hits = data.get("hits", [])
+    if not hits:
+        return f"No results found for gene symbol '{gene_symbol}' in mouse."
+
+    hit = hits[0]
+    lines = [f"Gene: {hit.get('symbol', gene_symbol)}"]
+
+    name = hit.get("name")
+    if name:
+        lines.append(f"Full name: {name}")
+
+    summary = hit.get("summary")
+    if summary:
+        lines.append(f"Summary: {summary}")
+
+    go_bp = hit.get("go", {}).get("BP", [])
+    if isinstance(go_bp, dict):
+        go_bp = [go_bp]
+    if go_bp:
+        terms = list({t["term"] for t in go_bp if "term" in t})[:8]
+        if terms:
+            lines.append(f"GO Biological Process ({len(terms)} shown): " + "; ".join(terms))
+
+    pathways = hit.get("pathway", {}).get("kegg", [])
+    if isinstance(pathways, dict):
+        pathways = [pathways]
+    if pathways:
+        pnames = [p.get("name", p.get("id", "?")) for p in pathways][:5]
+        lines.append(f"KEGG Pathways: " + "; ".join(pnames))
+
+    return "\n".join(lines)
+
+
+def tool_protein_interactions(gene_symbol: str, limit: int = 10) -> str:
+    """Fetch protein-protein interactions from STRING DB."""
+    limit = min(max(1, limit), 50)
+    url = (
+        f"https://string-db.org/api/json/interaction_partners?"
+        f"identifiers={gene_symbol}&species=10090&limit={limit}"
+    )
+    try:
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as e:
+        return f"Error querying STRING DB for {gene_symbol}: {e}"
+
+    if not data:
+        return f"No protein interactions found for '{gene_symbol}' in mouse (STRING DB)."
+
+    lines = [f"Protein interactions for {gene_symbol} (mouse, STRING DB):"]
+    for entry in data[:limit]:
+        partner = entry.get("preferredName_B", entry.get("stringId_B", "?"))
+        score = entry.get("score", 0)
+        lines.append(f"  - {partner} (combined score: {score:.3f})")
+
+    return "\n".join(lines)
+
+
+def execute_tool(name: str, arguments: dict) -> str:
+    """Dispatch a tool call and return the result string."""
+    if name == "train_data_lookup":
+        return tool_train_data_lookup(
+            pert=arguments.get("pert"),
+            gene=arguments.get("gene"),
+        )
+    elif name == "gene_info":
+        return tool_gene_info(arguments.get("gene_symbol", ""))
+    elif name == "protein_interactions":
+        return tool_protein_interactions(
+            gene_symbol=arguments.get("gene_symbol", ""),
+            limit=arguments.get("limit", 10),
         )
     return f"Unknown tool: {name}"
 
@@ -236,8 +420,12 @@ def save_cache(path: Path, obj: dict) -> None:
 
 SYSTEM_PROMPT = (
     "You are an expert molecular biologist participating in a gene expression "
-    "prediction challenge. You have access to tools that can look up gene "
-    "information. Use them if helpful, then provide your final answer.\n\n"
+    "prediction challenge. You have access to tools that can:\n"
+    "  1) Look up labeled training examples for perturbation/gene pairs\n"
+    "  2) Fetch gene annotations (function, GO terms, pathways) from mygene.info\n"
+    "  3) Fetch known protein-protein interactions from STRING DB\n\n"
+    "Use these tools to gather evidence, reason about the biological "
+    "relationship, then provide your final answer.\n\n"
     "Return your final choice in this exact format:\n"
     "<answer>A</answer> or <answer>B</answer>"
 )
@@ -343,26 +531,23 @@ def main() -> None:
         + _PROMPT_DIR_ZERO.format(pert="{pert}", gene="{gene}", cell_desc=CELL_DESC)
     )
 
-    # Copy tools/ into output dir
+    # Copy tools/ into output dir as standalone .py files
     out_tools = args.output_dir / "tools"
     if out_tools.exists():
         shutil.rmtree(out_tools)
-    out_tools.mkdir()
-    # Write the tool definitions as a .py file for auditability
-    tool_py = out_tools / "gene_lookup.py"
-    tool_py.write_text(
-        '"""Placeholder gene_lookup tool -- replace with your implementation."""\n\n'
-        "TOOL_SCHEMA = " + json.dumps(TOOL_DEFINITIONS[0], indent=2) + "\n\n\n"
-        "def gene_lookup(gene_symbol: str) -> str:\n"
-        '    return f"{gene_symbol}: placeholder -- add real implementation"\n'
-    )
+    src_tools = Path(__file__).resolve().parent / "tools"
+    if src_tools.exists():
+        shutil.copytree(src_tools, out_tools)
+    else:
+        out_tools.mkdir()
+        (out_tools / "__init__.py").write_text("")
 
     # Package zip
     zip_path = args.output_dir / "submission_track_b.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.write(sub_path, "submission.csv")
         zf.write(prompt_path, "prompt.txt")
-        for tool_file in out_tools.glob("*.py"):
+        for tool_file in out_tools.rglob("*.py"):
             zf.write(tool_file, f"tools/{tool_file.name}")
 
     print(f"Wrote {sub_path}")

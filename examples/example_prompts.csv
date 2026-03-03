@@ -1,0 +1,4 @@
+id,prompt
+de_Acin1_Fgl2,"You are an expert molecular biologist. Does CRISPRi knockdown of Acin1 in mouse BMDMs cause differential expression of Fgl2? Answer A (no) or B (yes)."
+de_Acin1_Slamf9,"You are an expert molecular biologist. Does CRISPRi knockdown of Acin1 in mouse BMDMs cause differential expression of Slamf9? Answer A (no) or B (yes)."
+dir_Stat1_Irf1,"You are an expert molecular biologist. When Stat1 is knocked down in mouse BMDMs, Irf1 is differentially expressed. Is Irf1 down-regulated (A) or up-regulated (B)?"

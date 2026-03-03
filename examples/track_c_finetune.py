@@ -1,15 +1,24 @@
 """
 Track C -- Fine-tuning inference baseline.
 
-Runs inference against a locally-served model (e.g. via vLLM) and captures
-the full reasoning trace including <think>...</think> blocks. Packages
-results into a zip ready for Kaggle upload.
+Runs inference against a locally-served fine-tuned model (e.g. via vLLM)
+and captures the full reasoning trace including <think>...</think> blocks.
+Packages results into a zip ready for Kaggle upload.
 
-Usage:
+Fine-tune a model first with:
+    python examples/finetune.py              # produces outputs/finetuned_model/
+
+Then serve it:
+    vllm serve outputs/finetuned_model/ --host 0.0.0.0 --port 8000
+
+Then run this script:
     pip install -e .   # from repo root -- installs mlgenx
-    python examples/track_c_finetune.py \
-        --api-base http://localhost:8000/v1 \
-        --model Qwen3-4B-Thinking-2507
+    python examples/track_c_finetune.py \\
+        --api-base http://localhost:8000/v1 \\
+        --model outputs/finetuned_model/
+
+You can also point --model at any HuggingFace model ID served via vLLM,
+e.g. --model Qwen/Qwen3-4B-Thinking-2507 for the un-tuned base model.
 """
 
 from __future__ import annotations
@@ -141,7 +150,16 @@ def main() -> None:
     )
     parser.add_argument("--api-base", default="http://localhost:8000/v1")
     parser.add_argument("--api-key", default="token-abc123")
-    parser.add_argument("--model", default="Qwen3-4B-Thinking-2507")
+    parser.add_argument(
+        "--model", default="outputs/finetuned_model",
+        help="Model name or path. Use the output of finetune.py, or a "
+             "HuggingFace model ID (e.g. Qwen/Qwen3-4B-Thinking-2507).",
+    )
+    parser.add_argument(
+        "--base-model", default=None,
+        help="If serving a LoRA adapter separately, specify the base model "
+             "name here (used only for the model_name field in submission).",
+    )
     parser.add_argument("--max-tokens", type=int, default=16000,
                         help="Max new tokens (Track C allows up to 16,000)")
     parser.add_argument("--timeout-s", type=int, default=600)
@@ -154,6 +172,7 @@ def main() -> None:
     args = parser.parse_args()
 
     model_name = args.model
+    display_name = args.base_model if args.base_model else model_name
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     cache_path = args.output_dir / "responses_cache.json"
@@ -213,7 +232,7 @@ def main() -> None:
             "prediction": pred,
             "reasoning_trace": full_trace,
             "tokens_used": int(token_stats.get("total_tokens", 0)),
-            "model_name": model_name,
+            "model_name": display_name,
         }
 
         new_count += 1
@@ -237,7 +256,7 @@ def main() -> None:
             "prediction": c.get("prediction", 0.5),
             "reasoning_trace": c.get("reasoning_trace", ""),
             "tokens_used": int(c.get("tokens_used", 0)),
-            "model_name": c.get("model_name", model_name),
+            "model_name": c.get("model_name", display_name),
         })
 
     sub_df = pd.DataFrame(rows_out)
@@ -247,7 +266,7 @@ def main() -> None:
     # Write prompt.txt
     prompt_path = args.output_dir / "prompt.txt"
     prompt_path.write_text(
-        f"# Prompt template used for Track C (model: {model_name})\n\n"
+        f"# Prompt template used for Track C (model: {display_name})\n\n"
         "## DE task\n\n"
         + _PROMPT_DE_ZERO.format(pert="{pert}", gene="{gene}", cell_desc=CELL_DESC)
         + "\n\n## Dir task\n\n"

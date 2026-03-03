@@ -5,12 +5,36 @@ Calls an OpenAI-compatible API 3 times per question (seeds 42, 43, 44)
 with temperature=1.0, top_p=1.0. Averages the per-seed predictions into
 a final score and packages everything into a zip ready for Kaggle upload.
 
+Prompt input modes (mutually exclusive):
+
+  --prompts-csv FILE    CSV or JSONL with columns ``id`` and ``prompt``.
+                        Each row supplies a ready-to-send prompt.  The file
+                        must cover every id in test.csv.
+
+  --prompt-template FILE  A text file containing a prompt template with
+                        ``{pert}``, ``{gene}``, and optionally ``{task}`` /
+                        ``{cell_desc}`` placeholders.  The script reads
+                        test.csv and fills in the template per row.
+
+  (neither)             Falls back to ``mlgenx.format_prompt`` zero-shot
+                        templates.
+
 Usage:
     pip install -e .   # from repo root -- installs mlgenx
-    python examples/track_a_prompt_only.py \
-        --api-base http://your-endpoint/v1 \
-        --api-key YOUR_KEY \
-        --model GPT-OSS-120B
+
+    # Default (built-in mlgenx prompts):
+    python examples/track_a_prompt_only.py \\
+        --api-base http://your-endpoint/v1 --api-key YOUR_KEY
+
+    # With a custom prompt template:
+    python examples/track_a_prompt_only.py \\
+        --prompt-template examples/prompt_template.txt \\
+        --api-base http://your-endpoint/v1 --api-key YOUR_KEY
+
+    # With pre-built per-row prompts:
+    python examples/track_a_prompt_only.py \\
+        --prompts-csv my_prompts.csv \\
+        --api-base http://your-endpoint/v1 --api-key YOUR_KEY
 """
 
 from __future__ import annotations
@@ -28,12 +52,82 @@ from typing import Dict, Tuple
 import pandas as pd
 
 from mlgenx import format_prompt, parse_answer
-from mlgenx.prompts import CELL_DESC, _PROMPT_DE_ZERO, _PROMPT_DIR_ZERO
+from mlgenx.prompts import CELL_DESC
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_CSV = ROOT / "data" / "test.csv"
 SEEDS = [42, 43, 44]
 
+
+# ---------------------------------------------------------------------------
+# Prompt loading
+# ---------------------------------------------------------------------------
+
+def load_prompts_csv(path: Path) -> Dict[str, str]:
+    """Load a CSV or JSONL of (id, prompt) pairs into {id: prompt}."""
+    suffix = path.suffix.lower()
+    if suffix in (".jsonl", ".ndjson"):
+        records = []
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if line:
+                records.append(json.loads(line))
+        df = pd.DataFrame(records)
+    else:
+        df = pd.read_csv(path)
+
+    missing = {"id", "prompt"} - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"{path} is missing required column(s): {missing}. "
+            f"Expected columns: id, prompt"
+        )
+    return dict(zip(df["id"].astype(str), df["prompt"].astype(str)))
+
+
+def load_prompt_template(path: Path) -> str:
+    """Read a prompt template file. Must contain at least {pert} and {gene}."""
+    text = path.read_text()
+    for required in ("{pert}", "{gene}"):
+        if required not in text:
+            raise ValueError(
+                f"Template {path} must contain placeholder {required}"
+            )
+    return text
+
+
+def resolve_prompt(
+    row: pd.Series,
+    *,
+    prompts_map: Dict[str, str] | None,
+    template: str | None,
+) -> str:
+    """Return the prompt string for one test row."""
+    rid = str(row["id"])
+    task = row["task"]
+
+    if prompts_map is not None:
+        if rid not in prompts_map:
+            raise KeyError(
+                f"Row id {rid!r} not found in prompts file. "
+                f"The file must contain a prompt for every test row."
+            )
+        return prompts_map[rid]
+
+    if template is not None:
+        return template.format(
+            pert=row["pert"],
+            gene=row["gene"],
+            task=task,
+            cell_desc=CELL_DESC,
+        )
+
+    return format_prompt(row["pert"], row["gene"], task)
+
+
+# ---------------------------------------------------------------------------
+# API helpers
+# ---------------------------------------------------------------------------
 
 def post_chat_completion(
     api_base: str,
@@ -98,6 +192,10 @@ def extract_answer_tag(text: str) -> str | None:
     return m.group(1).upper() if m else None
 
 
+# ---------------------------------------------------------------------------
+# Cache helpers
+# ---------------------------------------------------------------------------
+
 def load_cache(path: Path) -> dict:
     if path.exists():
         try:
@@ -112,10 +210,27 @@ def save_cache(path: Path, obj: dict) -> None:
     path.write_text(json.dumps(obj, indent=2))
 
 
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Track A: Prompt-only baseline (3 seeds)"
     )
+
+    # Prompt source (mutually exclusive)
+    prompt_src = parser.add_mutually_exclusive_group()
+    prompt_src.add_argument(
+        "--prompts-csv", type=Path, default=None,
+        help="CSV or JSONL with columns (id, prompt). One pre-written prompt per test row.",
+    )
+    prompt_src.add_argument(
+        "--prompt-template", type=Path, default=None,
+        help="Text file with a prompt template containing {pert}, {gene}, and "
+             "optionally {task}/{cell_desc} placeholders.",
+    )
+
     parser.add_argument("--api-base", default="http://localhost:8000/v1")
     parser.add_argument("--api-key", default="token-abc123")
     parser.add_argument("--model", default="GPT-OSS-120B")
@@ -128,6 +243,19 @@ def main() -> None:
     )
     parser.add_argument("--save-every", type=int, default=25)
     args = parser.parse_args()
+
+    # Resolve prompt source
+    prompts_map: Dict[str, str] | None = None
+    template: str | None = None
+
+    if args.prompts_csv is not None:
+        prompts_map = load_prompts_csv(args.prompts_csv)
+        print(f"Loaded {len(prompts_map)} prompts from {args.prompts_csv}")
+    elif args.prompt_template is not None:
+        template = load_prompt_template(args.prompt_template)
+        print(f"Loaded prompt template from {args.prompt_template}")
+    else:
+        print("Using default mlgenx zero-shot prompts")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     cache_path = args.output_dir / "responses_cache.json"
@@ -142,7 +270,9 @@ def main() -> None:
     for idx, row in test_df.iterrows():
         rid = row["id"]
         task = row["task"]
-        prompt_raw = format_prompt(row["pert"], row["gene"], task)
+        prompt_raw = resolve_prompt(
+            row, prompts_map=prompts_map, template=template
+        )
         prompt = append_answer_tag(prompt_raw)
 
         cached = cache["rows"].get(rid, {})
@@ -223,15 +353,31 @@ def main() -> None:
     sub_path = args.output_dir / "submission.csv"
     sub_df.to_csv(sub_path, index=False)
 
-    # Write prompt.txt
+    # Write prompt.txt (record whichever prompt source was used)
     prompt_path = args.output_dir / "prompt.txt"
-    prompt_path.write_text(
-        "# Prompt template used for Track A (zero-shot)\n\n"
-        "## DE task\n\n"
-        + _PROMPT_DE_ZERO.format(pert="{pert}", gene="{gene}", cell_desc=CELL_DESC)
-        + "\n\n## Dir task\n\n"
-        + _PROMPT_DIR_ZERO.format(pert="{pert}", gene="{gene}", cell_desc=CELL_DESC)
-    )
+    if args.prompts_csv is not None:
+        prompt_path.write_text(
+            f"# Track A -- per-row prompts loaded from {args.prompts_csv.name}\n"
+            f"# Total prompts: {len(prompts_map)}\n"
+        )
+    elif args.prompt_template is not None:
+        prompt_path.write_text(
+            f"# Track A -- prompt template from {args.prompt_template.name}\n\n"
+            + template
+        )
+    else:
+        from mlgenx.prompts import _PROMPT_DE_ZERO, _PROMPT_DIR_ZERO
+        prompt_path.write_text(
+            "# Track A -- default mlgenx zero-shot prompts\n\n"
+            "## DE task\n\n"
+            + _PROMPT_DE_ZERO.format(
+                pert="{pert}", gene="{gene}", cell_desc=CELL_DESC
+            )
+            + "\n\n## Dir task\n\n"
+            + _PROMPT_DIR_ZERO.format(
+                pert="{pert}", gene="{gene}", cell_desc=CELL_DESC
+            )
+        )
 
     # Package zip
     zip_path = args.output_dir / "submission_track_a.zip"
