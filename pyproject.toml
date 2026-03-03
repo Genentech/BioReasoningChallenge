@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlgenx"
+version = "0.1.0"
+description = "Helper package for the MLGenX PerturbPair competition"
+dependencies = [
+    "pandas",
+    "numpy",
+]
+
+[tool.setuptools]
+packages = ["mlgenx"]
