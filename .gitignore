@@ -10,3 +10,5 @@ wheels/
 
 outputs/
 *.h5ad
+
+uv.lock

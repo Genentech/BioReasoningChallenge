@@ -80,13 +80,13 @@ Calls the LLM with 3 seeds (42, 43, 44), averages the predictions, and packages 
 
 ```bash
 # Default: uses mlgenx built-in prompts
-python examples/track_a_prompt_only.py --api-base http://your-api/v1 --api-key YOUR_KEY
+uv run python examples/track_a_prompt_only.py --api-base http://your-api/v1 --api-key YOUR_KEY
 
 # Use a custom prompt template (placeholders: {pert}, {gene}, {task}, {cell_desc})
-python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
+uv run python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
 
 # Use a CSV/JSONL of pre-written per-row prompts (columns: id, prompt)
-python examples/track_a_prompt_only.py --prompts-csv examples/example_prompts.csv ...
+uv run python examples/track_a_prompt_only.py --prompts-csv examples/example_prompts.csv ...
 ```
 
 See `examples/prompt_template.txt` and `examples/example_prompts.csv` for input format examples.
@@ -96,7 +96,7 @@ See `examples/prompt_template.txt` and `examples/example_prompts.csv` for input 
 Runs an agentic loop where the LLM can call tools between reasoning steps.
 
 ```bash
-python examples/track_b_agentic.py --api-base http://your-api/v1 --api-key YOUR_KEY
+uv run python examples/track_b_agentic.py --api-base http://your-api/v1 --api-key YOUR_KEY
 ```
 
 Three example tools are provided in `examples/tools/`:
@@ -114,7 +114,7 @@ Track C is a two-step workflow:
 **Step 1: Fine-tune** (run once)
 
 ```bash
-python examples/finetune.py \
+uv run python examples/finetune.py \
     --train-csv data/train.csv \
     --model Qwen/Qwen3-4B-Thinking-2507 \
     --output outputs/finetuned_model \
@@ -130,7 +130,7 @@ This produces a merged LoRA model in `outputs/finetuned_model/`.
 vllm serve outputs/finetuned_model --port 8000
 
 # Generate predictions
-python examples/track_c_finetune.py \
+uv run python examples/track_c_finetune.py \
     --api-base http://localhost:8000/v1 \
     --model outputs/finetuned_model \
     --base-model Qwen/Qwen3-4B-Thinking-2507

@@ -106,12 +106,7 @@ def resolve_prompt(
     rid = str(row["id"])
     task = row["task"]
 
-    if prompts_map is not None:
-        if rid not in prompts_map:
-            raise KeyError(
-                f"Row id {rid!r} not found in prompts file. "
-                f"The file must contain a prompt for every test row."
-            )
+    if prompts_map is not None and rid in prompts_map:
         return prompts_map[rid]
 
     if template is not None:
@@ -219,21 +214,23 @@ def main() -> None:
         description="Track A: Prompt-only baseline (3 seeds)"
     )
 
-    # Prompt source (mutually exclusive)
-    prompt_src = parser.add_mutually_exclusive_group()
-    prompt_src.add_argument(
+    # Prompt sources (can combine: CSV overrides template, template overrides default)
+    parser.add_argument(
         "--prompts-csv", type=Path, default=None,
-        help="CSV or JSONL with columns (id, prompt). One pre-written prompt per test row.",
+        help="CSV or JSONL with columns (id, prompt). Rows found here use "
+             "the provided prompt; remaining rows fall back to --prompt-template "
+             "or the built-in default.",
     )
-    prompt_src.add_argument(
+    parser.add_argument(
         "--prompt-template", type=Path, default=None,
         help="Text file with a prompt template containing {pert}, {gene}, and "
-             "optionally {task}/{cell_desc} placeholders.",
+             "optionally {task}/{cell_desc} placeholders. Used as fallback for "
+             "rows not in --prompts-csv.",
     )
 
     parser.add_argument("--api-base", default="http://localhost:8000/v1")
     parser.add_argument("--api-key", default="token-abc123")
-    parser.add_argument("--model", default="GPT-OSS-120B")
+    parser.add_argument("--model", default="openai/gpt-oss-120b")
     parser.add_argument("--max-tokens", type=int, default=1024)
     parser.add_argument("--timeout-s", type=int, default=240)
     parser.add_argument("--max-retries", type=int, default=2)
@@ -251,10 +248,10 @@ def main() -> None:
     if args.prompts_csv is not None:
         prompts_map = load_prompts_csv(args.prompts_csv)
         print(f"Loaded {len(prompts_map)} prompts from {args.prompts_csv}")
-    elif args.prompt_template is not None:
+    if args.prompt_template is not None:
         template = load_prompt_template(args.prompt_template)
         print(f"Loaded prompt template from {args.prompt_template}")
-    else:
+    if prompts_map is None and template is None:
         print("Using default mlgenx zero-shot prompts")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)

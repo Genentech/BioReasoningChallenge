@@ -9,6 +9,8 @@ description = "Helper package for the MLGenX PerturbPair competition"
 dependencies = [
     "pandas",
     "numpy",
+    "openai>=2.24.0",
+    "dspy>=3.1.3",
 ]
 
 [tool.setuptools]
