@@ -161,14 +161,19 @@ def post_chat_completion(
     choices = out.get("choices", [])
     if choices:
         msg = choices[0].get("message", {}) or {}
-        content = msg.get("content", "")
+        reasoning = msg.get("reasoning", "") or ""
+        content = msg.get("content", "") or ""
         if isinstance(content, list):
             content = "\n".join(
                 str(c.get("text", c.get("content", "")))
                 for c in content
                 if isinstance(c, dict)
             )
-        return str(content).strip(), token_stats
+        # Combine reasoning (chain-of-thought) and content (final answer)
+        # so that the full model output is preserved in the reasoning trace.
+        parts = [p for p in (str(reasoning).strip(), str(content).strip()) if p]
+        full_text = "\n\n".join(parts)
+        return full_text, token_stats
 
     return "", token_stats
 
