@@ -1164,10 +1164,10 @@ de_Clp1_Spaca6,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Clp1 does not impact Spaca6.",183,Qwen/Qwen3-4B-Thinking-2507
-de_Cmtr1_Ifit1,0.5,,163,Qwen/Qwen3-4B-Thinking-2507
+de_Cmtr1_Ifit1,0.5,N/A,163,Qwen/Qwen3-4B-Thinking-2507
 de_Cmtr1_Mx2,0.0,"<answer>A</answer>
 A) Knockdown of Cmtr1 does not impact Mx2.",185,Qwen/Qwen3-4B-Thinking-2507
-de_Cmtr1_Fryl,0.5,,160,Qwen/Qwen3-4B-Thinking-2507
+de_Cmtr1_Fryl,0.5,N/A,160,Qwen/Qwen3-4B-Thinking-2507
 de_Cmtr1_Sf3a1,0.0,"</think>
 
 <answer>A</answer>
@@ -1702,7 +1702,7 @@ de_Ddb1_Ccr2,0.0,"</think>
 <answer>A</answer>
 A) Knockdown of Ddb1 does not impact Ccr2.",183,Qwen/Qwen3-4B-Thinking-2507
 de_Ddb1_Mterf2,0.0,<answer>A</answer>,169,Qwen/Qwen3-4B-Thinking-2507
-de_Ddb1_Zfp275,0.5,,166,Qwen/Qwen3-4B-Thinking-2507
+de_Ddb1_Zfp275,0.5,N/A,166,Qwen/Qwen3-4B-Thinking-2507
 de_Ddost_Hspa5,0.0,"</think>
 
 <answer>A</answer>
@@ -2246,7 +2246,7 @@ de_Elp5_Srgn,0.0,"</think>
 
 <answer>A</answer>",168,Qwen/Qwen3-4B-Thinking-2507
 de_Elp5_Smpdl3a,0.0,<answer>A</answer>,172,Qwen/Qwen3-4B-Thinking-2507
-de_Elp5_Spa17,0.5,,160,Qwen/Qwen3-4B-Thinking-2507
+de_Elp5_Spa17,0.5,N/A,160,Qwen/Qwen3-4B-Thinking-2507
 de_Elp5_Hmgn1,0.0,"</think>
 
 <answer>A</answer>
@@ -2552,7 +2552,7 @@ de_Gins4_Peli2,0.0,"</think>
 <answer>A</answer>
 A) Knockdown of Gins4 does not impact Peli2.",179,Qwen/Qwen3-4B-Thinking-2507
 de_Gins4_6530409C15Rik,0.0,<answer>A</answer>,193,Qwen/Qwen3-4B-Thinking-2507
-de_Gins4_Rffl,0.5,,157,Qwen/Qwen3-4B-Thinking-2507
+de_Gins4_Rffl,0.5,N/A,157,Qwen/Qwen3-4B-Thinking-2507
 de_Gins4_Kifap3,0.0,"</think>
 
 <answer>A</answer>
@@ -3383,7 +3383,7 @@ de_Kdsr_Ppp2r1b,0.0,"</think>
 <answer>A</answer>
 A) Knockdown of Kdsr does not impact Ppp2r1b.",195,Qwen/Qwen3-4B-Thinking-2507
 de_Kdsr_Gm47242,0.0,<answer>A</answer>,178,Qwen/Qwen3-4B-Thinking-2507
-de_Kdsr_Ccdc47,0.5,,163,Qwen/Qwen3-4B-Thinking-2507
+de_Kdsr_Ccdc47,0.5,N/A,163,Qwen/Qwen3-4B-Thinking-2507
 de_Kin_Lgals3,0.0,"</think>
 
 <answer>A</answer>
@@ -3897,7 +3897,7 @@ de_Med25_Gphn,1.0,"</think>
 
 <answer>B</answer>
 B) Knockdown of Med25 results in differential expression of Gphn.",185,Qwen/Qwen3-4B-Thinking-2507
-de_Med25_Kpnb1,0.5,,163,Qwen/Qwen3-4B-Thinking-2507
+de_Med25_Kpnb1,0.5,N/A,163,Qwen/Qwen3-4B-Thinking-2507
 de_Med29_Srgn,1.0,"<answer>B</answer>
 <answer>B</answer>",172,Qwen/Qwen3-4B-Thinking-2507
 de_Med29_Ccnd2,0.0,"</think>
@@ -4104,7 +4104,7 @@ de_Myc_Spata24,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Myc does not impact Spata24.",183,Qwen/Qwen3-4B-Thinking-2507
-de_Myc_Mettl5,0.5,,157,Qwen/Qwen3-4B-Thinking-2507
+de_Myc_Mettl5,0.5,N/A,157,Qwen/Qwen3-4B-Thinking-2507
 de_Myd88_Pou2f2,0.0,"</think>
 
 <answer>A</answer>
@@ -4910,7 +4910,7 @@ de_Pi4kb_Rell2,0.0,"</think>
 de_Pias1_Ctsl,0.0,"<answer>A</answer>
 A) Knockdown of Pias1 does not impact Ctsl.",181,Qwen/Qwen3-4B-Thinking-2507
 de_Pias1_Hgsnat,0.0,<answer>A</answer>,166,Qwen/Qwen3-4B-Thinking-2507
-de_Pias1_C1s1,0.5,,163,Qwen/Qwen3-4B-Thinking-2507
+de_Pias1_C1s1,0.5,N/A,163,Qwen/Qwen3-4B-Thinking-2507
 de_Pias1_Kat2b,0.0,"<think>
 
 <answer>A</answer>",168,Qwen/Qwen3-4B-Thinking-2507
@@ -5090,7 +5090,7 @@ A) Knockdown of Polr2g does not impact Gstt2.",187,Qwen/Qwen3-4B-Thinking-2507
 de_Polr2g_Acot13,0.0,"</think>
 
 <answer>A</answer>",174,Qwen/Qwen3-4B-Thinking-2507
-de_Polr2g_Rbm10,0.5,,166,Qwen/Qwen3-4B-Thinking-2507
+de_Polr2g_Rbm10,0.5,N/A,166,Qwen/Qwen3-4B-Thinking-2507
 de_Polr2g_Aunip,0.0,"</think>
 
 <answer>A</answer>
@@ -5289,7 +5289,7 @@ de_Prpf38b_Gm32200,0.0,"</think>
 A) Knockdown of Prpf38b does not impact Gm32200.",207,Qwen/Qwen3-4B-Thinking-2507
 de_Prpf38b_Trp53rkb,0.0,"<answer>A</answer>
 A) Knockdown of Prpf38b does not impact Trp53rkb.",201,Qwen/Qwen3-4B-Thinking-2507
-de_Prpf40a_Cd300c2,0.5,,175,Qwen/Qwen3-4B-Thinking-2507
+de_Prpf40a_Cd300c2,0.5,N/A,175,Qwen/Qwen3-4B-Thinking-2507
 de_Prpf40a_H2bc4,0.0,"<answer>A</answer>
 A) Knockdown of Prpf40a does not impact H2bc4.",193,Qwen/Qwen3-4B-Thinking-2507
 de_Prpf40a_A430057M04Rik,0.0,<answer>A</answer>,199,Qwen/Qwen3-4B-Thinking-2507
@@ -5875,7 +5875,7 @@ A) Knockdown of Ric1 does not impact Gm20540.",193,Qwen/Qwen3-4B-Thinking-2507
 de_Rnf40_Osbpl8,0.0,"</think>
 
 <answer>A</answer>",174,Qwen/Qwen3-4B-Thinking-2507
-de_Rnf40_Brd2,0.5,,163,Qwen/Qwen3-4B-Thinking-2507
+de_Rnf40_Brd2,0.5,N/A,163,Qwen/Qwen3-4B-Thinking-2507
 de_Rnf40_N4bp2,0.0,"</think>
 
 <answer>A</answer>
@@ -5935,7 +5935,7 @@ de_Rpap2_Aunip,0.0,"</think>
 <answer>A</answer>
 A) Knockdown of Rpap2 does not impact Aunip.",183,Qwen/Qwen3-4B-Thinking-2507
 de_Rpf2_Cdkn1a,0.0,<answer>A</answer>,172,Qwen/Qwen3-4B-Thinking-2507
-de_Rpf2_ENSMUSG00000121501,0.5,,199,Qwen/Qwen3-4B-Thinking-2507
+de_Rpf2_ENSMUSG00000121501,0.5,N/A,199,Qwen/Qwen3-4B-Thinking-2507
 de_Rpf2_U90926,0.0,"</think>
 
 <answer>A</answer>
@@ -6118,7 +6118,7 @@ de_Rprd2_D5Ertd615e,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Rprd2 does not impact D5Ertd615e.",203,Qwen/Qwen3-4B-Thinking-2507
-de_Rps19_Cd36,0.5,,163,Qwen/Qwen3-4B-Thinking-2507
+de_Rps19_Cd36,0.5,N/A,163,Qwen/Qwen3-4B-Thinking-2507
 de_Rps19_Ptgs2,0.0,"</think>
 
 <answer>A</answer>
@@ -6131,7 +6131,7 @@ de_Rps19_Sgf29,1.0,"</think>
 
 <answer>B</answer>
 B) Knockdown of Rps19 results in differential expression of Sgf29.",193,Qwen/Qwen3-4B-Thinking-2507
-de_Rps19_Ccl12,0.5,,166,Qwen/Qwen3-4B-Thinking-2507
+de_Rps19_Ccl12,0.5,N/A,166,Qwen/Qwen3-4B-Thinking-2507
 de_Rps19_B130034C11Rik,0.0,"</think>
 
 <answer>A</answer>",198,Qwen/Qwen3-4B-Thinking-2507
@@ -6441,7 +6441,7 @@ B) Knockdown of Sec63 results in differential expression of D330041H03Rik.
 Answer:",278,Qwen/Qwen3-4B-Thinking-2507
 de_Sec63_Cenpl,0.0,<answer>A</answer>,166,Qwen/Qwen3-4B-Thinking-2507
 de_Sec63_Slc1a2,0.0,<answer>A</answer>,172,Qwen/Qwen3-4B-Thinking-2507
-de_Sec63_Zfp189,0.5,,166,Qwen/Qwen3-4B-Thinking-2507
+de_Sec63_Zfp189,0.5,N/A,166,Qwen/Qwen3-4B-Thinking-2507
 de_Sec63_Ebag9,0.0,"</think>
 
 <answer>A</answer>
@@ -7064,7 +7064,7 @@ de_Stat2_Rnf213,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Stat2 does not impact Rnf213.",187,Qwen/Qwen3-4B-Thinking-2507
-de_Stat2_Cdca5,0.5,,157,Qwen/Qwen3-4B-Thinking-2507
+de_Stat2_Cdca5,0.5,N/A,157,Qwen/Qwen3-4B-Thinking-2507
 de_Stat2_Gcnt2,0.0,"</think>
 
 <answer>A</answer>
@@ -7488,7 +7488,7 @@ de_Tmem258_Hspa5,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Tmem258 does not impact Hspa5.",191,Qwen/Qwen3-4B-Thinking-2507
-de_Tmem258_Hsp90b1,0.5,,175,Qwen/Qwen3-4B-Thinking-2507
+de_Tmem258_Hsp90b1,0.5,N/A,175,Qwen/Qwen3-4B-Thinking-2507
 de_Tmem258_Dzip3,1.0,"</think>
 
 <answer>B</answer>
@@ -7800,7 +7800,7 @@ de_Tsc2_Matn2,0.0,"</think>
 A) Knockdown of Tsc2 does not impact Matn2.",183,Qwen/Qwen3-4B-Thinking-2507
 de_Tsc2_D6Wsu163e,0.0,"<answer>A</answer>
 A) Knockdown of Tsc2 does not impact D6Wsu163e.",201,Qwen/Qwen3-4B-Thinking-2507
-de_Tsc2_Gpr174,0.5,,166,Qwen/Qwen3-4B-Thinking-2507
+de_Tsc2_Gpr174,0.5,N/A,166,Qwen/Qwen3-4B-Thinking-2507
 de_Tsc2_Syngap1,0.0,"</think>
 
 <answer>A</answer>",171,Qwen/Qwen3-4B-Thinking-2507
@@ -7880,8 +7880,8 @@ de_Tut1_Adcy3,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Tut1 does not impact Adcy3.",179,Qwen/Qwen3-4B-Thinking-2507
-de_Tut1_Amz2,0.5,,157,Qwen/Qwen3-4B-Thinking-2507
-de_Tut1_Agpat2,0.5,,157,Qwen/Qwen3-4B-Thinking-2507
+de_Tut1_Amz2,0.5,N/A,157,Qwen/Qwen3-4B-Thinking-2507
+de_Tut1_Agpat2,0.5,N/A,157,Qwen/Qwen3-4B-Thinking-2507
 de_Tut1_Sphk1,0.0,<answer>A</answer>,166,Qwen/Qwen3-4B-Thinking-2507
 de_Tut1_Mrpl45,0.0,<answer>A</answer>,166,Qwen/Qwen3-4B-Thinking-2507
 de_Txnl4a_Lmna,0.0,<answer>A</answer>,169,Qwen/Qwen3-4B-Thinking-2507
@@ -7896,7 +7896,7 @@ A) Knockdown of Txnl4a does not impact Maml3.",187,Qwen/Qwen3-4B-Thinking-2507
 de_Txnl4a_Nlrp1b,0.0,"</think>
 
 <answer>A</answer>",177,Qwen/Qwen3-4B-Thinking-2507
-de_Txnl4a_Ift22,0.5,,166,Qwen/Qwen3-4B-Thinking-2507
+de_Txnl4a_Ift22,0.5,N/A,166,Qwen/Qwen3-4B-Thinking-2507
 de_Txnl4a_Ccdc157,0.0,"</think>
 
 <answer>A</answer>",177,Qwen/Qwen3-4B-Thinking-2507
@@ -9053,7 +9053,7 @@ dir_Ap3d1_Lgals3,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Ap3d1 results in down-regulation of Lgals3.",208,Qwen/Qwen3-4B-Thinking-2507
-dir_Ap3d1_Cd63,0.5,,176,Qwen/Qwen3-4B-Thinking-2507
+dir_Ap3d1_Cd63,0.5,N/A,176,Qwen/Qwen3-4B-Thinking-2507
 dir_Arid1a_Clec4a2,1.0,"</think>
 
 <answer>B</answer>",192,Qwen/Qwen3-4B-Thinking-2507
@@ -10014,7 +10014,7 @@ B) Knockdown of Leng1 results in up-regulation of Cd52.",199,Qwen/Qwen3-4B-Think
 dir_Leng8_Cd52,0.0,"</think>
 
 <answer>A</answer>",181,Qwen/Qwen3-4B-Thinking-2507
-dir_Leng8_Samd9l,0.5,,177,Qwen/Qwen3-4B-Thinking-2507
+dir_Leng8_Samd9l,0.5,N/A,177,Qwen/Qwen3-4B-Thinking-2507
 dir_Leo1_Selenop,0.0,"<answer>A</answer>
 A) Knockdown of Leo1 results in down-regulation of Selenop.",193,Qwen/Qwen3-4B-Thinking-2507
 dir_Leo1_Igtp,1.0,"</think>
@@ -10328,7 +10328,7 @@ dir_Orc3_Hspa1a,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Orc3 results in down-regulation of Hspa1a.",200,Qwen/Qwen3-4B-Thinking-2507
-dir_Orc3_Fcgr2b,0.5,,178,Qwen/Qwen3-4B-Thinking-2507
+dir_Orc3_Fcgr2b,0.5,N/A,178,Qwen/Qwen3-4B-Thinking-2507
 dir_Orc4_Aplp2,1.0,"</think>
 
 <answer>B</answer>
@@ -11123,7 +11123,7 @@ dir_Syk_Lpl,1.0,"</think>
 
 <answer>B</answer>",174,Qwen/Qwen3-4B-Thinking-2507
 dir_Syk_Gpx1,0.0,<answer>A</answer>,176,Qwen/Qwen3-4B-Thinking-2507
-dir_Syvn1_Hsp90b1,0.5,,185,Qwen/Qwen3-4B-Thinking-2507
+dir_Syvn1_Hsp90b1,0.5,N/A,185,Qwen/Qwen3-4B-Thinking-2507
 dir_Syvn1_Hspa5,0.0,"</think>
 
 <answer>A</answer>
@@ -11132,7 +11132,7 @@ dir_Taf11_Polr2a,0.0,"</think>
 
 <answer>A</answer>
 A) Knockdown of Taf11 results in down-regulation of Polr2a.",208,Qwen/Qwen3-4B-Thinking-2507
-dir_Taf11_Slamf9,0.5,,176,Qwen/Qwen3-4B-Thinking-2507
+dir_Taf11_Slamf9,0.5,N/A,176,Qwen/Qwen3-4B-Thinking-2507
 dir_Tbk1_Polr2g,0.0,<answer>A</answer>,183,Qwen/Qwen3-4B-Thinking-2507
 dir_Tbk1_Niban1,0.0,"</think>
 
@@ -11580,7 +11580,7 @@ A) Knockdown of Xpr1 results in down-regulation of Creg1.",199,Qwen/Qwen3-4B-Thi
 dir_Xpr1_Fxyd2,0.0,"</think>
 
 <answer>A</answer>",185,Qwen/Qwen3-4B-Thinking-2507
-dir_Yrdc_Cyb5r1,0.5,,181,Qwen/Qwen3-4B-Thinking-2507
+dir_Yrdc_Cyb5r1,0.5,N/A,181,Qwen/Qwen3-4B-Thinking-2507
 dir_Yrdc_Smpdl3a,0.0,"<answer>A</answer>
 A) Knockdown of Yrdc results in down-regulation of Smpdl3a.",207,Qwen/Qwen3-4B-Thinking-2507
 dir_Yy1_Map1lc3a,0.0,"</think>
