@@ -5,6 +5,13 @@ Calls an OpenAI-compatible API 3 times per question (seeds 42, 43, 44)
 with temperature=1.0, top_p=1.0. Averages the per-seed predictions into
 a final score and packages everything into a zip ready for Kaggle upload.
 
+Note on reasoning models:
+    GPT-OSS-120B is a reasoning model.  The max_tokens budget covers both
+    the internal chain-of-thought and the visible answer.  If the model
+    exhausts the budget during reasoning, the response is empty and the
+    prediction defaults to 0.5.  This is expected -- averaging across 3
+    seeds still yields useful predictions when at least one seed succeeds.
+
 Prompt input modes (mutually exclusive):
 
   --prompts-csv FILE    CSV or JSONL with columns ``id`` and ``prompt``.
@@ -24,17 +31,21 @@ Usage:
 
     # Default (built-in mlgenx prompts):
     python examples/track_a_prompt_only.py \\
-        --api-base http://your-endpoint/v1 --api-key YOUR_KEY
+        --api-base http://localhost:8000/v1
+
+    # Parallel requests (much faster):
+    python examples/track_a_prompt_only.py \\
+        --api-base http://localhost:8000/v1 --concurrency 20
 
     # With a custom prompt template:
     python examples/track_a_prompt_only.py \\
         --prompt-template examples/prompt_template.txt \\
-        --api-base http://your-endpoint/v1 --api-key YOUR_KEY
+        --api-base http://localhost:8000/v1
 
     # With pre-built per-row prompts:
     python examples/track_a_prompt_only.py \\
         --prompts-csv my_prompts.csv \\
-        --api-base http://your-endpoint/v1 --api-key YOUR_KEY
+        --api-base http://localhost:8000/v1
 """
 
 from __future__ import annotations
@@ -42,10 +53,12 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -161,14 +174,17 @@ def post_chat_completion(
     choices = out.get("choices", [])
     if choices:
         msg = choices[0].get("message", {}) or {}
-        content = msg.get("content", "")
+        reasoning = msg.get("reasoning", "") or ""
+        content = msg.get("content", "") or ""
         if isinstance(content, list):
             content = "\n".join(
                 str(c.get("text", c.get("content", "")))
                 for c in content
                 if isinstance(c, dict)
             )
-        return str(content).strip(), token_stats
+        # Combine reasoning (chain-of-thought) and content (final answer)
+        parts = [p for p in (str(reasoning).strip(), str(content).strip()) if p]
+        return "\n\n".join(parts), token_stats
 
     return "", token_stats
 
@@ -239,6 +255,10 @@ def main() -> None:
         "--output-dir", type=Path, default=ROOT / "outputs" / "track_a"
     )
     parser.add_argument("--save-every", type=int, default=25)
+    parser.add_argument(
+        "--concurrency", type=int, default=1,
+        help="Number of concurrent requests. Increase to speed up inference.",
+    )
     args = parser.parse_args()
 
     # Resolve prompt source
@@ -262,9 +282,11 @@ def main() -> None:
 
     test_df = pd.read_csv(args.test_csv)
     total = len(test_df)
+    cache_lock = threading.Lock()
     new_count = 0
 
-    for idx, row in test_df.iterrows():
+    def process_row(idx: int, row: pd.Series) -> None:
+        nonlocal new_count
         rid = row["id"]
         task = row["task"]
         prompt_raw = resolve_prompt(
@@ -272,16 +294,18 @@ def main() -> None:
         )
         prompt = append_answer_tag(prompt_raw)
 
-        cached = cache["rows"].get(rid, {})
-        if all(f"prediction_seed{s}" in cached for s in SEEDS):
-            print(f"[{idx+1}/{total}] {rid} cache_hit")
-            continue
+        with cache_lock:
+            cached = cache["rows"].get(rid, {})
+            if all(f"prediction_seed{s}" in cached for s in SEEDS):
+                print(f"[{idx+1}/{total}] {rid} cache_hit")
+                return
 
         for seed in SEEDS:
             key_pred = f"prediction_seed{seed}"
             key_trace = f"reasoning_trace_seed{seed}"
-            if key_pred in cached:
-                continue
+            with cache_lock:
+                if key_pred in cached:
+                    continue
 
             text = ""
             token_stats: Dict[str, float] = {}
@@ -316,15 +340,25 @@ def main() -> None:
             cached.get(f"prediction_seed{s}", 0.5) for s in SEEDS
         ) / len(SEEDS)
         cached["task"] = task
-        cache["rows"][rid] = cached
 
-        new_count += 1
-        print(
-            f"[{idx+1}/{total}] {rid} task={task} "
-            f"pred={cached['prediction']:.3f} tokens={cached['tokens_used']:.0f}"
-        )
-        if new_count % args.save_every == 0:
-            save_cache(cache_path, cache)
+        with cache_lock:
+            cache["rows"][rid] = cached
+            new_count += 1
+            print(
+                f"[{idx+1}/{total}] {rid} task={task} "
+                f"pred={cached['prediction']:.3f} "
+                f"tokens={cached['tokens_used']:.0f}"
+            )
+            if new_count % args.save_every == 0:
+                save_cache(cache_path, cache)
+
+    with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
+        futures = [
+            pool.submit(process_row, idx, row)
+            for idx, row in test_df.iterrows()
+        ]
+        for future in as_completed(futures):
+            future.result()  # raise any exceptions
 
     save_cache(cache_path, cache)
     print(f"Collected {total} rows ({new_count} new API calls)")

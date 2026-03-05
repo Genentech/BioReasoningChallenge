@@ -96,16 +96,30 @@ Use `--tensor-parallel-size <N>` to shard across multiple GPUs if a single GPU d
 The first run downloads model weights (~120 GB) from Hugging Face.
 Set `HF_HOME` to a partition with sufficient disk space.
 
+### Reasoning model behavior
+
+GPT-OSS-120B is a **reasoning model**.  The `max_tokens` budget covers both
+the internal chain-of-thought and the visible answer.  If the model uses all
+tokens during reasoning, the response comes back empty (`finish_reason: "length"`).
+This is expected and happens often with certain seed/prompt combinations.
+
+The example scripts default to 0.5 for empty responses.  To reduce empty
+responses, keep prompts short and consider using `reasoning_effort: "low"` in
+the API payload.
+
 ## Example Scripts
 
 ### Track A -- `examples/track_a_prompt_only.py`
 
 Calls the LLM with 3 seeds (42, 43, 44), averages the predictions, and packages a zip.
-The example script processes requests sequentially; consider parallelizing for faster runs.
+Use `--concurrency N` to send multiple requests in parallel for faster runs.
 
 ```bash
 # Default: uses mlgenx built-in prompts
 uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1
+
+# Parallel requests (much faster)
+uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1 --concurrency 20
 
 # Use a custom prompt template (placeholders: {pert}, {gene}, {task}, {cell_desc})
 uv run python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
