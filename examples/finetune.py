@@ -4,23 +4,27 @@ Track C -- Fine-tune Qwen3-4B-Thinking-2507 with LoRA on competition data.
 Converts train.csv into chat-format examples, runs LoRA fine-tuning via
 trl's SFTTrainer, then merges and saves the adapter for serving with vLLM.
 
-Prerequisites (not included in mlgenx package dependencies):
-    pip install torch transformers peft trl datasets accelerate
+Install the training dependencies (separate from serving -- see README):
+    uv sync --extra train
 
 Usage:
-    python examples/finetune.py                          # defaults
-    python examples/finetune.py --epochs 5 --lr 2e-4     # custom
-    python examples/finetune.py --output-dir my_model/    # custom output
+    uv run --extra train python examples/finetune.py                       # defaults
+    uv run --extra train python examples/finetune.py --epochs 5 --lr 2e-4  # custom
 
-After training, serve the merged model with vLLM:
-    vllm serve outputs/finetuned_model/ \\
+After training, switch to the serve environment and start vLLM:
+    uv sync --extra serve
+    uv run --extra serve vllm serve outputs/finetuned_model/ \\
         --host 0.0.0.0 --port 8000 \\
         --max-model-len 4096
 
 Then run inference:
-    python examples/track_c_finetune.py \\
+    uv run --extra serve python examples/track_c_finetune.py \\
         --api-base http://localhost:8000/v1 \\
         --model outputs/finetuned_model/
+
+NOTE: The train and serve extras use incompatible transformers versions
+(>=5.3 vs <5) and cannot be installed simultaneously. After fine-tuning,
+run the tokenizer patch described in README.md before serving.
 """
 
 from __future__ import annotations
@@ -168,7 +172,7 @@ def main() -> None:
     print("Loading model...")
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
-        torch_dtype=torch.bfloat16 if args.bf16 else torch.float32,
+        dtype=torch.bfloat16 if args.bf16 else torch.float32,
         trust_remote_code=True,
         device_map="auto",
     )
@@ -203,7 +207,7 @@ def main() -> None:
         logging_steps=10,
         save_strategy="epoch",
         seed=args.seed,
-        max_seq_length=args.max_seq_len,
+        max_length=args.max_seq_len,
         report_to="none",
     )
 

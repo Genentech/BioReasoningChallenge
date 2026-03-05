@@ -24,10 +24,18 @@ The competition is hosted on Kaggle with three separate tracks:
 ```bash
 git clone https://github.com/genentech/bioreasoningchallenge.git
 cd bioreasoningchallenge
-pip install -e .
+uv sync            # core deps only (prompts, parsing, submission)
 ```
 
 This installs the `mlgenx` helper package, which provides prompt generation and answer parsing.
+
+Track C has separate dependency groups for fine-tuning and serving (they require
+incompatible `transformers` versions and cannot be installed together):
+
+```bash
+uv sync --extra train   # fine-tuning: torch, transformers 5.x, trl, peft, …
+uv sync --extra serve   # serving:     vllm (brings transformers 4.x)
+```
 
 ## Data
 
@@ -109,28 +117,56 @@ Three example tools are provided in `examples/tools/`:
 
 ### Track C -- `examples/finetune.py` + `examples/track_c_finetune.py`
 
-Track C is a two-step workflow:
+Track C is a two-step workflow. Fine-tuning and serving require **different
+dependency sets** (`train` vs `serve` extras) because `trl` needs
+`transformers>=5.3` while vLLM requires `transformers<5`. Switch between them
+by re-running `uv sync` with the appropriate extra.
 
-**Step 1: Fine-tune** (run once)
+**Step 1: Fine-tune** (run once, needs a GPU)
 
 ```bash
-uv run python examples/finetune.py \
+uv sync --extra train
+
+uv run --extra train python examples/finetune.py \
     --train-csv data/train.csv \
-    --model Qwen/Qwen3-4B-Thinking-2507 \
-    --output outputs/finetuned_model \
-    --epochs 3 --lr 2e-4 --lora-r 16
+    --model-id Qwen/Qwen3-4B-Thinking-2507 \
+    --output-dir outputs/finetuned_model \
+    --epochs 3 --lr 2e-4 --lora-rank 16
 ```
 
 This produces a merged LoRA model in `outputs/finetuned_model/`.
 
-**Step 2: Serve and run inference**
+**Step 1b: Patch tokenizer** (one-time fix after fine-tuning)
+
+The `train` extra uses `transformers>=5.3`, which saves `extra_special_tokens`
+in a format incompatible with the `transformers 4.x` bundled by vLLM. Run this
+once after fine-tuning to fix the tokenizer config:
 
 ```bash
-# Serve with vLLM
-vllm serve outputs/finetuned_model --port 8000
+python -c "
+import json; from pathlib import Path
+p = Path('outputs/finetuned_model/tokenizer_config.json')
+cfg = json.loads(p.read_text())
+est = cfg.get('extra_special_tokens')
+if isinstance(est, list):
+    cfg['extra_special_tokens'] = {t: t for t in est} if est else {}
+    p.write_text(json.dumps(cfg, indent=2, ensure_ascii=False))
+    print(f'Fixed: converted list of {len(est)} tokens to dict')
+else:
+    print('No fix needed')
+"
+```
 
-# Generate predictions
-uv run python examples/track_c_finetune.py \
+**Step 2: Serve and run inference** (needs a GPU)
+
+```bash
+uv sync --extra serve
+
+# Serve with vLLM
+uv run --extra serve vllm serve outputs/finetuned_model --port 8000
+
+# In another terminal -- generate predictions
+uv run --extra serve python examples/track_c_finetune.py \
     --api-base http://localhost:8000/v1 \
     --model outputs/finetuned_model \
     --base-model Qwen/Qwen3-4B-Thinking-2507

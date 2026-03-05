@@ -5,15 +5,16 @@ Runs inference against a locally-served fine-tuned model (e.g. via vLLM)
 and captures the full reasoning trace including <think>...</think> blocks.
 Packages results into a zip ready for Kaggle upload.
 
-Fine-tune a model first with:
-    python examples/finetune.py              # produces outputs/finetuned_model/
+Fine-tune a model first (using the train extra -- see README):
+    uv sync --extra train
+    uv run --extra train python examples/finetune.py  # -> outputs/finetuned_model/
 
-Then serve it:
-    vllm serve outputs/finetuned_model/ --host 0.0.0.0 --port 8000
+Then switch to the serve environment and start vLLM:
+    uv sync --extra serve
+    uv run --extra serve vllm serve outputs/finetuned_model/ --host 0.0.0.0 --port 8000
 
-Then run this script:
-    pip install -e .   # from repo root -- installs mlgenx
-    python examples/track_c_finetune.py \\
+Then run this script (in a separate terminal, same serve environment):
+    uv run --extra serve python examples/track_c_finetune.py \\
         --api-base http://localhost:8000/v1 \\
         --model outputs/finetuned_model/
 
