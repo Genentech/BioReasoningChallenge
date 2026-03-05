@@ -80,15 +80,46 @@ See [`kaggle_data_description.md`](kaggle_data_description.md) for full data doc
 - **Not allowed**: Tools, web access, or external models during inference
 - **Submission**: `submission.csv` + `prompt.txt` in a zip
 
+## Serving GPT-OSS-120B (Tracks A & B)
+
+Tracks A and B use a fixed model that you serve locally via vLLM:
+
+```bash
+uv sync --extra serve
+
+uv run --extra serve vllm serve openai/gpt-oss-120b --port 8000
+```
+
+The model is ~120B parameters with mxfp4 quantization (~60 GB of weights).
+Use `--tensor-parallel-size <N>` to shard across multiple GPUs if a single GPU does not have enough memory.
+
+The first run downloads model weights (~120 GB) from Hugging Face.
+Set `HF_HOME` to a partition with sufficient disk space.
+
+### Reasoning model behavior
+
+GPT-OSS-120B is a **reasoning model**.  The `max_tokens` budget covers both
+the internal chain-of-thought and the visible answer.  If the model uses all
+tokens during reasoning, the response comes back empty (`finish_reason: "length"`).
+This is expected and happens often with certain seed/prompt combinations.
+
+The example scripts default to 0.5 for empty responses.  To reduce empty
+responses, keep prompts short and consider using `reasoning_effort: "low"` in
+the API payload.
+
 ## Example Scripts
 
 ### Track A -- `examples/track_a_prompt_only.py`
 
 Calls the LLM with 3 seeds (42, 43, 44), averages the predictions, and packages a zip.
+Use `--concurrency N` to send multiple requests in parallel for faster runs.
 
 ```bash
 # Default: uses mlgenx built-in prompts
-uv run python examples/track_a_prompt_only.py --api-base http://your-api/v1 --api-key YOUR_KEY
+uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1
+
+# Parallel requests (much faster)
+uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1 --concurrency 20
 
 # Use a custom prompt template (placeholders: {pert}, {gene}, {task}, {cell_desc})
 uv run python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
@@ -104,7 +135,7 @@ See `examples/prompt_template.txt` and `examples/example_prompts.csv` for input 
 Runs an agentic loop where the LLM can call tools between reasoning steps.
 
 ```bash
-uv run python examples/track_b_agentic.py --api-base http://your-api/v1 --api-key YOUR_KEY
+uv run python examples/track_b_agentic.py --api-base http://localhost:8000/v1
 ```
 
 Three example tools are provided in `examples/tools/`:
