@@ -6,11 +6,13 @@ to call, and iterates until it produces a final answer.  Uses DSPy's
 text-based tool calling which works with any instruction-following model
 (no native function-calling API support required).
 
-Ships with three working tools:
+Ships with five working tools:
 
-  1. train_data_lookup    -- query competition training data (local)
-  2. gene_info            -- fetch gene annotations from mygene.info
-  3. protein_interactions -- fetch protein interactions from STRING DB
+  1. lookup_pert          -- what genes are affected by a perturbation?
+  2. lookup_gene          -- what perturbations affect a gene?
+  3. gene_info            -- fetch gene annotations from mygene.info
+  4. protein_interactions -- fetch protein interactions from STRING DB
+  5. submit_answer        -- submit the final A/B answer
 
 Participants should extend or replace these with their own tools.
 
@@ -59,43 +61,81 @@ def _get_train_df() -> pd.DataFrame:
 # Tool implementations
 # ---------------------------------------------------------------------------
 
-def train_data_lookup(pert: str = "", gene: str = "") -> str:
-    """Search the competition training data for labeled examples involving
-    a specific perturbation gene and/or target gene.  Returns matching rows
-    with their task type and ground-truth label.  Provide at least one of
-    pert or gene."""
-    if not pert and not gene:
-        return "Error: provide at least one of 'pert' or 'gene'."
+_LABEL_STR = {
+    ("de", 0): "not differentially expressed",
+    ("de", 1): "differentially expressed",
+    ("dir", 0): "down-regulated",
+    ("dir", 1): "up-regulated",
+}
 
+
+def lookup_pert(pert: str) -> str:
+    """Look up all training examples where a given gene was knocked down
+    (CRISPRi perturbation).  Returns a summary of which target genes were
+    differentially expressed and which were not, plus direction info if
+    available.  Use this to understand the downstream effects of perturbing
+    a gene."""
     df = _get_train_df()
-    mask = pd.Series(True, index=df.index)
-    if pert:
-        mask &= df["pert"].str.lower() == pert.lower()
-    if gene:
-        mask &= df["gene"].str.lower() == gene.lower()
-
-    hits = df[mask]
+    hits = df[df["pert"].str.lower() == pert.lower()]
     if hits.empty:
-        parts = []
-        if pert:
-            parts.append(f"pert={pert}")
-        if gene:
-            parts.append(f"gene={gene}")
-        return f"No training examples found for {', '.join(parts)}."
+        return f"No training examples found for perturbation '{pert}'."
 
-    lines = [f"Found {len(hits)} training example(s):"]
-    for _, r in hits.iterrows():
-        label_str = {
-            ("de", 0): "no differential expression",
-            ("de", 1): "differential expression",
-            ("dir", 0): "down-regulated",
-            ("dir", 1): "up-regulated",
-        }.get((r["task"], r["label"]), str(r["label"]))
+    de = hits[hits["task"] == "de"]
+    de_yes = de[de["label"] == 1]["gene"].tolist()
+    de_no = de[de["label"] == 0]["gene"].tolist()
+    dir_hits = hits[hits["task"] == "dir"]
+    dir_up = dir_hits[dir_hits["label"] == 1]["gene"].tolist()
+    dir_down = dir_hits[dir_hits["label"] == 0]["gene"].tolist()
+
+    lines = [f"Training data for perturbation '{pert}' ({len(hits)} examples):"]
+    if de_yes or de_no:
         lines.append(
-            f"  - pert={r['pert']}, gene={r['gene']}, task={r['task']}, "
-            f"label={r['label']} ({label_str})"
+            f"  DE: {len(de_yes)} differentially expressed, "
+            f"{len(de_no)} not impacted"
+        )
+        if de_yes:
+            lines.append(f"    DE genes: {', '.join(de_yes[:30])}")
+        if de_no:
+            lines.append(f"    Not impacted: {', '.join(de_no[:30])}")
+    if dir_up or dir_down:
+        lines.append(
+            f"  Direction: {len(dir_up)} up-regulated, "
+            f"{len(dir_down)} down-regulated"
+        )
+        if dir_up:
+            lines.append(f"    Up-regulated: {', '.join(dir_up[:30])}")
+        if dir_down:
+            lines.append(f"    Down-regulated: {', '.join(dir_down[:30])}")
+    return "\n".join(lines)
+
+
+def lookup_gene(gene: str) -> str:
+    """Look up all training examples where a given gene was the measurement
+    target (its expression was checked after some perturbation).  Returns
+    which perturbations caused differential expression of this gene and
+    which did not.  Use this to understand what regulates a gene."""
+    df = _get_train_df()
+    hits = df[df["gene"].str.lower() == gene.lower()]
+    if hits.empty:
+        return f"No training examples found for target gene '{gene}'."
+
+    lines = [f"Training data for target gene '{gene}' ({len(hits)} examples):"]
+    for _, r in hits.iterrows():
+        label_str = _LABEL_STR.get((r["task"], r["label"]), str(r["label"]))
+        lines.append(
+            f"  - pert={r['pert']}, task={r['task']}: {label_str}"
         )
     return "\n".join(lines)
+
+
+def submit_answer(answer: str, reasoning: str = "") -> str:
+    """Submit your final answer to the gene expression question.  You MUST
+    call this tool when you have reached a conclusion.  The answer parameter
+    must be exactly 'A' or 'B'."""
+    answer = answer.strip().upper()
+    if answer not in ("A", "B"):
+        return f"Error: answer must be 'A' or 'B', got '{answer}'."
+    return f"Answer recorded: {answer}"
 
 
 def gene_info(gene_symbol: str) -> str:
@@ -186,6 +226,22 @@ def protein_interactions(gene_symbol: str, limit: int = 10) -> str:
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _tokens_from_history(lm: dspy.LM, start_idx: int) -> int:
+    """Sum total_tokens from LM history entries added since start_idx."""
+    total = 0
+    for entry in lm.history[start_idx:]:
+        if isinstance(entry, dict):
+            usage = entry.get("usage") or {}
+            if isinstance(usage, dict):
+                total += usage.get("total_tokens", 0)
+            else:
+                total += getattr(usage, "total_tokens", 0) or 0
+        elif hasattr(entry, "usage"):
+            u = entry.usage
+            total += getattr(u, "total_tokens", 0) if u else 0
+    return total
+
+
 def extract_answer_tag(text: str) -> str | None:
     m = re.search(r"<answer>\s*([ABab])\s*</answer>", text)
     return m.group(1).upper() if m else None
@@ -212,7 +268,8 @@ def save_cache(path: Path, obj: dict) -> None:
 class BioPredict(dspy.Signature):
     """You are an expert molecular biologist who studies gene expression
     using Perturb-seq.  Use the available tools to look up training data
-    and gene annotations, then answer the gene expression question."""
+    and gene annotations, then call submit_answer with your final choice
+    (A or B)."""
 
     question: str = dspy.InputField(
         desc="Gene expression prediction question with answer choices"
@@ -226,17 +283,7 @@ class BioPredict(dspy.Signature):
 # Main
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = (
-    "You are an expert molecular biologist participating in a gene expression "
-    "prediction challenge. You have access to tools that can:\n"
-    "  1) Look up labeled training examples for perturbation/gene pairs\n"
-    "  2) Fetch gene annotations (function, GO terms, pathways) from mygene.info\n"
-    "  3) Fetch known protein-protein interactions from STRING DB\n\n"
-    "Use these tools to gather evidence, reason about the biological "
-    "relationship, then provide your final answer.\n\n"
-    "Return your final choice in this exact format:\n"
-    "<answer>A</answer> or <answer>B</answer>"
-)
+DEFAULT_SYSTEM_PROMPT_PATH = ROOT / "examples" / "b_system_prompt.txt"
 
 
 def main() -> None:
@@ -246,23 +293,44 @@ def main() -> None:
     parser.add_argument("--api-base", default="http://localhost:8000/v1")
     parser.add_argument("--api-key", default="token-abc123")
     parser.add_argument("--model", default="openai/gpt-oss-120b")
-    parser.add_argument("--max-tokens", type=int, default=2048)
+    parser.add_argument("--max-tokens", type=int, default=32768)
     parser.add_argument("--timeout-s", type=int, default=240)
     parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument(
-        "--max-iters", type=int, default=5,
+        "--system-prompt", type=Path, default=DEFAULT_SYSTEM_PROMPT_PATH,
+        help="Path to system prompt file (contents used as-is).",
+    )
+    parser.add_argument(
+        "--max-iters", type=int, default=250,
         help="Max ReAct iterations (tool-call rounds per row)",
     )
     parser.add_argument("--test-csv", type=Path, default=TEST_CSV)
     parser.add_argument(
         "--output-dir", type=Path, default=ROOT / "outputs" / "track_b"
     )
-    parser.add_argument("--save-every", type=int, default=25)
+    parser.add_argument("--save-every", type=int, default=5)
     parser.add_argument(
         "--clear-cache", action="store_true",
         help="Delete cached API responses and start fresh.",
     )
     args = parser.parse_args()
+
+    system_prompt = args.system_prompt.read_text().strip()
+    try:
+        import tiktoken
+        enc = tiktoken.get_encoding("cl100k_base")
+        prompt_tokens = len(enc.encode(system_prompt))
+    except Exception:
+        prompt_tokens = len(system_prompt) // 4  # rough fallback
+    print(
+        f"System prompt loaded from {args.system_prompt} "
+        f"({len(system_prompt)} chars, ~{prompt_tokens} tokens)"
+    )
+    if prompt_tokens > 4096:
+        parser.error(
+            f"System prompt is ~{prompt_tokens} tokens, exceeds 4096 limit. "
+            f"Shorten {args.system_prompt} and retry."
+        )
 
     # ── Configure DSPy ────────────────────────────────────────────────
     # litellm model format: "openai/<model_name_on_server>"
@@ -284,9 +352,19 @@ def main() -> None:
         adapter=dspy.ChatAdapter(use_native_function_calling=False),
     )
 
+    tool_list = [
+        lookup_pert, lookup_gene, gene_info,
+        protein_interactions, submit_answer,
+    ]
+    if len(tool_list) > 100:
+        parser.error(
+            f"Too many tools ({len(tool_list)}), competition limit is 100."
+        )
+    print(f"Tools: {len(tool_list)}, max_iters: {args.max_iters}")
+
     react = dspy.ReAct(
         BioPredict,
-        tools=[train_data_lookup, gene_info, protein_interactions],
+        tools=tool_list,
         max_iters=args.max_iters,
     )
 
@@ -315,8 +393,10 @@ def main() -> None:
         user_prompt = format_prompt(row["pert"], row["gene"], task)
 
         tool_calls_count = 0
+        tokens = 0
         trace: Any = {}
 
+        history_before = len(lm.history)
         try:
             result = react(question=user_prompt)
             final_text = result.answer or ""
@@ -330,23 +410,38 @@ def main() -> None:
             print(f"  [error] ReAct failed: {e}")
             final_text = ""
             trace = {"error": str(e)}
+        tokens = _tokens_from_history(lm, history_before)
 
-        tag = extract_answer_tag(final_text)
-        source = tag if tag else final_text
+        # Extract answer: prefer explicit submit_answer call, then fall
+        # back to parsing the ReAct answer text.
+        submitted = None
+        for k in sorted(trace.keys() if isinstance(trace, dict) else []):
+            if k.startswith("tool_name_") and trace[k] == "submit_answer":
+                step = k.split("_")[-1]
+                args_d = trace.get(f"tool_args_{step}", {})
+                submitted = args_d.get("answer", "").strip().upper()
+
+        if submitted in ("A", "B"):
+            source = submitted
+        else:
+            source = "" #No answer submitted
+
+        #    tag = extract_answer_tag(final_text)
+        #    source = tag if tag else final_text
         pred = float(parse_answer(source, task=task, default=0.5))
 
         cache["rows"][rid] = {
             "task": task,
             "prediction": pred,
             "reasoning_trace": json.dumps(trace, default=str),
-            "tokens_used": 0,
+            "tokens_used": tokens,
             "num_tool_calls": tool_calls_count,
         }
 
         new_count += 1
         print(
             f"[{idx+1}/{total}] {rid} task={task} pred={pred:.3f} "
-            f"tools={tool_calls_count}"
+            f"tools={tool_calls_count} tokens={tokens}"
         )
         if new_count % args.save_every == 0:
             save_cache(cache_path, cache)
@@ -373,7 +468,7 @@ def main() -> None:
 
     prompt_path = args.output_dir / "prompt.txt"
     prompt_path.write_text(
-        "# System prompt used for Track B (DSPy ReAct)\n\n" + SYSTEM_PROMPT
+        "# System prompt used for Track B (DSPy ReAct)\n\n" + system_prompt
         + "\n\n# User prompt templates (zero-shot)\n\n"
         "## DE task\n\n"
         + _PROMPT_DE_ZERO.format(pert="{pert}", gene="{gene}", cell_desc=CELL_DESC)
@@ -395,6 +490,7 @@ def main() -> None:
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.write(sub_path, "submission.csv")
         zf.write(prompt_path, "prompt.txt")
+        zf.write(args.system_prompt, args.system_prompt.name)
         for tool_file in out_tools.rglob("*.py"):
             zf.write(tool_file, f"tools/{tool_file.name}")
 
