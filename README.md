@@ -80,15 +80,34 @@ See [`kaggle_data_description.md`](kaggle_data_description.md) for full data doc
 - **Not allowed**: Tools, web access, or external models during inference
 - **Submission**: `submission.csv` + `prompt.txt` in a zip
 
+## Serving GPT-OSS-120B (Tracks A & B)
+
+Tracks A and B use a fixed model that you serve locally via vLLM:
+
+```bash
+uv sync --extra serve
+
+uv run --extra serve vllm serve openai/gpt-oss-120b \
+    --port 8000 \
+    --api-key token-abc123
+```
+
+The model (~120B parameters, mxfp4-quantized) requires at least 2 GPUs.
+For multi-GPU serving, add `--tensor-parallel-size <N>`.
+
+The first run downloads model weights (~120 GB) from Hugging Face.
+Set `HF_HOME` to a partition with sufficient disk space if your home directory has limited quota.
+
 ## Example Scripts
 
 ### Track A -- `examples/track_a_prompt_only.py`
 
 Calls the LLM with 3 seeds (42, 43, 44), averages the predictions, and packages a zip.
+The example script processes requests sequentially; consider parallelizing for faster runs.
 
 ```bash
 # Default: uses mlgenx built-in prompts
-uv run python examples/track_a_prompt_only.py --api-base http://your-api/v1 --api-key YOUR_KEY
+uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1 --api-key token-abc123
 
 # Use a custom prompt template (placeholders: {pert}, {gene}, {task}, {cell_desc})
 uv run python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
@@ -104,7 +123,7 @@ See `examples/prompt_template.txt` and `examples/example_prompts.csv` for input 
 Runs an agentic loop where the LLM can call tools between reasoning steps.
 
 ```bash
-uv run python examples/track_b_agentic.py --api-base http://your-api/v1 --api-key YOUR_KEY
+uv run python examples/track_b_agentic.py --api-base http://localhost:8000/v1 --api-key token-abc123
 ```
 
 Three example tools are provided in `examples/tools/`:
