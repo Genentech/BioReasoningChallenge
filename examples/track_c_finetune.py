@@ -252,7 +252,7 @@ def main() -> None:
     for _, row in test_df.iterrows():
         rid = row["id"]
         c = cache["rows"].get(rid, {})
-        trace = c.get("reasoning_trace", "") or "N/A"
+        trace = c.get("reasoning_trace", "") or "(no reasoning trace)"
         rows_out.append({
             "id": rid,
             "prediction": c.get("prediction", 0.5),
