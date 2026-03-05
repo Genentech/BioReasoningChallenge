@@ -87,9 +87,7 @@ Tracks A and B use a fixed model that you serve locally via vLLM:
 ```bash
 uv sync --extra serve
 
-uv run --extra serve vllm serve openai/gpt-oss-120b \
-    --port 8000 \
-    --api-key token-abc123
+uv run --extra serve vllm serve openai/gpt-oss-120b --port 8000
 ```
 
 The model (~120B parameters, mxfp4-quantized) requires at least 2 GPUs.
@@ -107,7 +105,7 @@ The example script processes requests sequentially; consider parallelizing for f
 
 ```bash
 # Default: uses mlgenx built-in prompts
-uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1 --api-key token-abc123
+uv run python examples/track_a_prompt_only.py --api-base http://localhost:8000/v1
 
 # Use a custom prompt template (placeholders: {pert}, {gene}, {task}, {cell_desc})
 uv run python examples/track_a_prompt_only.py --prompt-template examples/prompt_template.txt ...
@@ -123,7 +121,7 @@ See `examples/prompt_template.txt` and `examples/example_prompts.csv` for input 
 Runs an agentic loop where the LLM can call tools between reasoning steps.
 
 ```bash
-uv run python examples/track_b_agentic.py --api-base http://localhost:8000/v1 --api-key token-abc123
+uv run python examples/track_b_agentic.py --api-base http://localhost:8000/v1
 ```
 
 Three example tools are provided in `examples/tools/`:
