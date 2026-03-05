@@ -90,11 +90,11 @@ uv sync --extra serve
 uv run --extra serve vllm serve openai/gpt-oss-120b --port 8000
 ```
 
-The model (~120B parameters, mxfp4-quantized) requires at least 2 GPUs.
-For multi-GPU serving, add `--tensor-parallel-size <N>`.
+The model is ~120B parameters with mxfp4 quantization (~60 GB of weights).
+Use `--tensor-parallel-size <N>` to shard across multiple GPUs if a single GPU does not have enough memory.
 
 The first run downloads model weights (~120 GB) from Hugging Face.
-Set `HF_HOME` to a partition with sufficient disk space if your home directory has limited quota.
+Set `HF_HOME` to a partition with sufficient disk space.
 
 ## Example Scripts
 
