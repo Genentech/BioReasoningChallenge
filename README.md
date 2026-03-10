@@ -17,7 +17,7 @@ The competition is hosted on Kaggle with three separate tracks:
 |-------|------|-------|----------------|
 | A | Prompt-only | GPT-OSS-120B (fixed) | Single prompt, 3 seeds, no tools |
 | B | Agentic tool-use | GPT-OSS-120B (fixed) | Tools allowed, max 250 calls |
-| C | Fine-tuning | Open-source (e.g. Qwen3-4B) | Any fine-tuning, no tools at inference |
+| C | Fine-tuning | Qwen3-4B-Thinking-2507 | Any fine-tuning, no tools at inference |
 
 ## Installation
 
@@ -74,7 +74,7 @@ See [`kaggle_data_description.md`](kaggle_data_description.md) for full data doc
 
 ### Track C -- Fine-tuning
 
-- **Model**: Open-source LLM (e.g. Qwen3-4B-Thinking-2507), any fine-tuning allowed
+- **Model**: Open-source LLM (Qwen3-4B-Thinking-2507), any fine-tuning allowed
 - **Format**: Prompt + input question, max 16,000 new tokens at inference
 - **Allowed**: SFT/LoRA, RL, process reward models, critic reranking, best-of-N
 - **Not allowed**: Tools, web access, or external models during inference
