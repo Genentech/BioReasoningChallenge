@@ -17,7 +17,7 @@ The competition is hosted on Kaggle with three separate tracks:
 |-------|------|-------|----------------|
 | A | Prompt-only | GPT-OSS-120B (fixed) | Single prompt, 3 seeds, no tools |
 | B | Agentic tool-use | GPT-OSS-120B (fixed) | Tools allowed, max 250 calls |
-| C | Fine-tuning | Qwen3-4B-Thinking-2507 | Any fine-tuning, no tools at inference |
+| C | Fine-tuning | Qwen3-4B-Thinking-2507 or Qwen3-4B-Instruct-2507 or Qwen3.5-4B  | Any fine-tuning, no tools at inference |
 
 ## Installation
 
