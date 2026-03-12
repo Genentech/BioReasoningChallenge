@@ -247,7 +247,7 @@ def main() -> None:
     parser.add_argument("--api-base", default="http://localhost:8000/v1")
     parser.add_argument("--api-key", default="token-abc123")
     parser.add_argument("--model", default="openai/gpt-oss-120b")
-    parser.add_argument("--max-tokens", type=int, default=1024)
+    parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--timeout-s", type=int, default=240)
     parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument("--test-csv", type=Path, default=TEST_CSV)
@@ -374,9 +374,9 @@ def main() -> None:
             "prediction_seed42": c.get("prediction_seed42", 0.5),
             "prediction_seed43": c.get("prediction_seed43", 0.5),
             "prediction_seed44": c.get("prediction_seed44", 0.5),
-            "reasoning_trace_seed42": c.get("reasoning_trace_seed42", ""),
-            "reasoning_trace_seed43": c.get("reasoning_trace_seed43", ""),
-            "reasoning_trace_seed44": c.get("reasoning_trace_seed44", ""),
+            "reasoning_trace_seed42": c.get("reasoning_trace_seed42") or "none",
+            "reasoning_trace_seed43": c.get("reasoning_trace_seed43") or "none",
+            "reasoning_trace_seed44": c.get("reasoning_trace_seed44") or "none",
             "tokens_used": int(c.get("tokens_used", 0)),
         })
 

@@ -91,21 +91,51 @@ uv run --extra serve vllm serve openai/gpt-oss-120b --port 8000
 ```
 
 The model is ~120B parameters with mxfp4 quantization (~60 GB of weights).
-Use `--tensor-parallel-size <N>` to shard across multiple GPUs if a single GPU does not have enough memory.
+Use `--tensor-parallel-size <N>` to shard across multiple GPUs if a single GPU
+does not have enough memory.  Two GPUs with ~80 GB each (e.g. A100-80G, H100,
+B200) are sufficient with `--tensor-parallel-size 2`.
 
-The first run downloads model weights (~120 GB) from Hugging Face.
-Set `HF_HOME` to a partition with sufficient disk space.
+The first run downloads model weights from Hugging Face.
+Set `HF_HOME` to a partition with at least **120 GB of free disk space** before
+starting the server.  If the download is interrupted (e.g. disk full), the
+cached snapshot may be left in an inconsistent state -- delete the partial cache
+directory under `$HF_HOME/hub/models--openai--gpt-oss-120b/` and retry.
 
 ### Reasoning model behavior
 
 GPT-OSS-120B is a **reasoning model**.  The `max_tokens` budget covers both
-the internal chain-of-thought and the visible answer.  If the model uses all
-tokens during reasoning, the response comes back empty (`finish_reason: "length"`).
-This is expected and happens often with certain seed/prompt combinations.
+the internal chain-of-thought ("reasoning") and the visible answer.  If the
+model exhausts the budget while still reasoning, the API returns an empty
+response (`content: null`, `finish_reason: "length"`).
 
-The example scripts default to 0.5 for empty responses.  To reduce empty
-responses, keep prompts short and consider using `reasoning_effort: "low"` in
-the API payload.
+This happens frequently -- especially with longer prompts or certain seeds --
+and can affect the majority of requests at the default `max_tokens=1024`.
+
+**To reduce empty responses:**
+
+- **Increase `--max-tokens`** to 4096 or higher.  The model typically needs
+  500--1500 tokens for reasoning before producing an answer.
+- **Keep prompts concise** -- fewer prompt tokens leave more room for the
+  model to reason and answer.
+- **Set `reasoning_effort: "low"`** in the API payload to reduce the length
+  of the internal chain-of-thought.
+
+The API response separates reasoning from the final answer:
+
+```json
+{
+  "choices": [{
+    "message": {
+      "reasoning": "... internal chain-of-thought ...",
+      "content": "... final answer ..."
+    },
+    "finish_reason": "stop"
+  }]
+}
+```
+
+When the model runs out of tokens during reasoning, both `reasoning` and
+`content` will be `null`.
 
 ## Example Scripts
 
@@ -220,6 +250,10 @@ Each track requires specific columns in `submission.csv`:
 **Track C** columns: `id, prediction, reasoning_trace, tokens_used, model_name`
 
 The `id` column must match every row in `test.csv` exactly. Only `id` and `prediction` are used for scoring; all other columns are required metadata. **Submissions missing required metadata columns will receive a score of 0.**
+
+**No null values allowed.** Every cell must be filled. For rows where the model
+returned an empty response, use `"none"` for reasoning traces and `0` for token
+counts. The example scripts handle this automatically.
 
 ### Step 3: Package into a zip
 
