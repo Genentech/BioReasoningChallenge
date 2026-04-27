@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioReasoning Challenge 2026 &mdash; MLGenX Workshop @ ICLR 2026</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --color-bg: #ffffff;
+  --color-bg-alt: #f7f8fa;
+  --color-text: #1a1a2e;
+  --color-text-muted: #555;
+  --color-primary: #1b4d7a;
+  --color-accent-a: #2d6a9f;
+  --color-accent-b: #7b2d8e;
+  --color-accent-c: #1a7a5a;
+  --color-nav: #0f1b2d;
+  --color-hero-start: #0f1b2d;
+  --color-hero-end: #1b3a5c;
+  --color-border: #dde1e6;
+  --max-width: 1100px;
+  --section-pad: 5rem 1.5rem;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--color-text);
+  line-height: 1.65;
+  background: var(--color-bg);
+}
+
+/* ── Navigation ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--color-nav);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nav-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; height: 56px;
+}
+.nav-brand {
+  font-weight: 700; font-size: 1rem; color: #fff; text-decoration: none;
+  letter-spacing: 0.02em;
+}
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a {
+  color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.875rem;
+  font-weight: 500; transition: color 0.2s;
+}
+.nav-links a:hover { color: #fff; }
+.nav-gh {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.nav-gh svg { width: 16px; height: 16px; fill: currentColor; }
+.nav-toggle { display: none; background: none; border: none; cursor: pointer; }
+.nav-toggle span {
+  display: block; width: 22px; height: 2px; background: #fff;
+  margin: 5px 0; transition: 0.3s;
+}
+
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, var(--color-hero-start), var(--color-hero-end));
+  color: #fff;
+  padding: 10rem 1.5rem 6rem;
+  text-align: center;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.hero .hero-subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 1.5rem;
+  font-weight: 400;
+}
+.hero .tagline {
+  font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  color: rgba(255,255,255,0.85);
+  max-width: 750px;
+  margin: 0 auto 2rem;
+}
+.hero-badges { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+.hero-badges a, .hero-badges span {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  color: #fff; text-decoration: none; padding: 0.55rem 1.2rem;
+  border-radius: 6px; font-size: 0.9rem; font-weight: 500;
+  transition: background 0.2s;
+}
+.hero-badges a:hover { background: rgba(255,255,255,0.22); }
+.hero-badges .placeholder {
+  opacity: 0.5; cursor: default; font-style: italic;
+}
+
+/* ── Sections ── */
+section { padding: var(--section-pad); }
+section:nth-child(even) { background: var(--color-bg-alt); }
+.container { max-width: var(--max-width); margin: 0 auto; }
+.section-title {
+  font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+.section-subtitle {
+  color: var(--color-text-muted); font-size: 1.05rem; margin-bottom: 2.5rem;
+}
+
+/* ── Prose paragraphs ── */
+.prose p { margin-bottom: 1rem; line-height: 1.7; }
+.prose p:last-child { margin-bottom: 0; }
+
+/* ── Track cards ── */
+.tracks-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+.track-card {
+  background: #fff; border-radius: 10px;
+  border: 1px solid var(--color-border);
+  overflow: hidden; transition: box-shadow 0.2s;
+}
+.track-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.track-card-header {
+  padding: 1.25rem 1.5rem; color: #fff; font-weight: 700; font-size: 1.1rem;
+}
+.track-a .track-card-header { background: var(--color-accent-a); }
+.track-b .track-card-header { background: var(--color-accent-b); }
+.track-c .track-card-header { background: var(--color-accent-c); }
+.track-card-body { padding: 1.25rem 1.5rem; }
+.track-card-body p { margin-bottom: 0.75rem; color: var(--color-text-muted); font-size: 0.95rem; }
+.track-card-body ul { padding-left: 1.2rem; color: var(--color-text-muted); font-size: 0.92rem; }
+.track-card-body li { margin-bottom: 0.4rem; }
+
+/* ── Bullet lists ── */
+.content-list { padding-left: 1.3rem; }
+.content-list li { margin-bottom: 0.7rem; line-height: 1.6; }
+
+/* ── Data subsections ── */
+.data-subsection { margin-bottom: 2rem; }
+.data-subsection h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.75rem; }
+.data-subsection p { margin-bottom: 0.75rem; line-height: 1.65; }
+
+/* ── Rules tabs ── */
+.rules-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.rules-tab {
+  padding: 0.5rem 1.2rem; border: 1px solid var(--color-border);
+  border-radius: 6px; background: #fff; cursor: pointer;
+  font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted);
+  transition: all 0.2s;
+}
+.rules-tab.active {
+  background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+}
+.rules-panel { display: none; }
+.rules-panel.active { display: block; }
+.rules-panel p { margin-bottom: 0.75rem; color: var(--color-text-muted); font-style: italic; }
+.rules-panel ul { padding-left: 1.3rem; }
+.rules-panel li { margin-bottom: 0.6rem; line-height: 1.6; }
+
+/* ── References ── */
+.references-list { list-style: decimal; padding-left: 1.5rem; }
+.references-list li { margin-bottom: 0.6rem; line-height: 1.6; word-break: break-all; }
+.references-list a { color: var(--color-primary); text-decoration: none; }
+.references-list a:hover { text-decoration: underline; }
+
+/* ── Organizers ── */
+.organizers-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+.organizer-card {
+  background: #fff; border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 1.5rem;
+  text-align: center; transition: box-shadow 0.2s;
+}
+.organizer-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.organizer-avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-weight: 700;
+  margin: 0 auto 1rem;
+}
+.organizer-card h3 { font-size: 1.05rem; margin-bottom: 0.3rem; }
+.organizer-card .role {
+  font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 0.75rem;
+}
+.organizer-card a {
+  font-size: 0.85rem; color: var(--color-primary); text-decoration: none; font-weight: 500;
+}
+.organizer-card a:hover { text-decoration: underline; }
+
+/* ── Footer ── */
+footer {
+  background: var(--color-nav); color: rgba(255,255,255,0.6);
+  text-align: center; padding: 2rem 1.5rem; font-size: 0.85rem;
+}
+footer a { color: rgba(255,255,255,0.8); text-decoration: none; }
+footer a:hover { color: #fff; }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex; flex-direction: column; position: absolute;
+    top: 56px; left: 0; right: 0; background: var(--color-nav);
+    padding: 1rem 1.5rem; gap: 1rem;
+  }
+  .nav-toggle { display: block; }
+  .hero { padding: 8rem 1.5rem 4rem; }
+  section { padding: 3rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#">BioReasoning Challenge</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#tracks">Tracks</a></li>
+      <li><a href="#data">Data</a></li>
+      <li><a href="#evaluation">Evaluation</a></li>
+      <li><a href="#awards">Awards</a></li>
+      <li><a href="#rules">Rules</a></li>
+      <li><a href="#references">References</a></li>
+      <li><a href="#organizers">Organizers</a></li>
+      <li>
+        <a class="nav-gh" href="https://github.com/Genentech/BioReasoningChallenge" target="_blank" rel="noopener">
+          <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <h1>BioReasoning Challenge 2026</h1>
+  <p class="hero-subtitle">MLGenX Workshop @ ICLR 2026</p>
+  <p class="tagline">
+    The goal of this challenge is to test whether LLMs and agentic systems can do more than talk about biology &mdash; whether they can serve as useful computational engines for predicting cellular behavior.
+  </p>
+  <div class="hero-badges">
+    <a href="#tracks">View Tracks</a>
+    <span class="placeholder">Kaggle &mdash; Track A (link coming soon)</span>
+    <span class="placeholder">Kaggle &mdash; Track B (link coming soon)</span>
+    <span class="placeholder">Kaggle &mdash; Track C (link coming soon)</span>
+    <a href="https://github.com/Genentech/BioReasoningChallenge" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Get Started
+    </a>
+  </div>
+</header>
+
+<!-- Overview -->
+<section id="overview">
+  <div class="container">
+    <h2 class="section-title">Overview</h2>
+    <p class="section-subtitle">MLGenX LLM Perturbation Challenge</p>
+    <div class="prose">
+      <p>The next wave of AI for science may emerge from the intersection of two frontier ideas: <strong>LLMs/agents as general reasoning systems</strong>, and <strong>virtual cells as predictive models of biological response</strong>. The <strong>MLGenX LLM Perturbation Challenge</strong> is designed to explore exactly that boundary.</p>
+      <p>In this challenge, participants tackle the focused but scientifically meaningful task of predicting the outcome of a Perturb-seq experiment: given a knockdown of gene X, predict whether a target gene Y will be up-regulated, down-regulated, or unchanged in activated macrophages. This framing turns perturbation biology into a benchmark for machine reasoning: can an AI system combine biological knowledge, causal intuition, and structured inference to anticipate the downstream effects of intervention?</p>
+      <p>The challenge is a controlled comparison of three emerging paradigms for scientific LLMs and agentic reasoning: <strong>prompt-guided reasoning</strong>, <strong>agentic tool use</strong>, and <strong>task-specific fine-tuning</strong>. In that sense, BioReasoningChallenge is not just a competition in predictive performance. It is a benchmark for a broader question shaping the future of computational biology: <strong>can frontier LLMs and agents become practical building blocks for virtual cell models?</strong></p>
+    </div>
+
+    <div style="text-align:center; margin-top:2.5rem; margin-bottom:2rem">
+      <img src="img/challenge_overview.png" alt="BioReasoning Challenge overview" style="max-width:100%; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.1)">
+    </div>
+
+    <h3 style="font-size:1.25rem; font-weight:600; margin-top:2.5rem; margin-bottom:0.75rem;">Tasks &ndash; Perturbation Prediction</h3>
+    <div class="prose">
+      <p>The core task is a supervised predictive challenge where participants must infer the effect of a specific gene perturbation on the expression of a target gene. Structurally, the task is defined as: <strong>Perturbation gene X &rarr; gene Y up/down/no-change</strong>. Participants will be scored based on their prediction of these post-processed labels, which indicate whether gene Y is up-regulated, down-regulated, or unchanged following the perturbation of gene X.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Tracks -->
+<section id="tracks">
+  <div class="container">
+    <h2 class="section-title">Tracks</h2>
+    <p class="section-subtitle">The challenge consists of three tracks</p>
+    <div class="tracks-grid">
+
+      <div class="track-card track-a">
+        <div class="track-card-header">Track A &mdash; Prompt-only (no tools, single call)</div>
+        <div class="track-card-body">
+          <p>Given a fixed LLM with no finetuning, provide a prompt which will encourage the model to give the best result.</p>
+          <ul>
+            <li>Fixed base LLM: GPT-OSS-120B</li>
+            <li>No tools, single call</li>
+            <li>3 samples per question (seeds 42, 43, 44)</li>
+            <li>Max 4,096 prompt tokens</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="track-card track-b">
+        <div class="track-card-header">Track B &mdash; (Multi)-agentic tool-use</div>
+        <div class="track-card-body">
+          <p>Given a fixed LLM with no finetuning, provide a prompt and a set of tools which will maximize performance on the task.</p>
+          <ul>
+            <li>Fixed base LLM: GPT-OSS-120B</li>
+            <li>Multi-agent design allowed</li>
+            <li>Max 100 distinct tools, 250 tool calls</li>
+            <li>Max 16,384 prompt tokens</li>
+            <li>Traces required for auditability</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="track-card track-c">
+        <div class="track-card-header">Track C &mdash; Fine-tuning (reasoning, no tools)</div>
+        <div class="track-card-body">
+          <p>Optimize the provided LLM to be an expert on this task.</p>
+          <ul>
+            <li>Open model &lt; 10B parameters</li>
+            <li>Any kind of finetuning technique allowed (SFT/LoRA, RL etc.)</li>
+            <li>No tools, no web, and no external models at inference</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Data & Splits -->
+<section id="data">
+  <div class="container">
+    <h2 class="section-title">Data</h2>
+    <p class="section-subtitle">The data consists of a set of ternary questions regarding the genetic perturbation effects in macrophage cells.</p>
+
+    <div class="data-subsection">
+      <h3>Biological background</h3>
+      <p>This dataset contains gene expression profiles from primary mouse bone marrow-derived macrophages (BMDMs), which are innate immune cells differentiated from bone marrow cells isolated from Cas9-transgenic mice. The cells were transduced with a pooled CRISPR knockout library targeting genes involved in inflammatory signaling and other macrophage-relevant processes, then stimulated with bacterial lipopolysaccharide (LPS) to induce an immune response. Nine hours after stimulation, single-cell RNA profiles were collected together with perturbation identities, enabling analysis of how specific gene knockouts (perturbation) alter macrophage transcriptional states during inflammation.</p>
+    </div>
+
+    <div class="data-subsection">
+      <h3>Preprocessing</h3>
+      <p>Differential expression analysis was performed on the top 10,000 highly variable features selected by scanpy. For each perturbation, we used glmGamPoi to fit a negative binomial regression comparing the perturbed cells against 2,000 random cells containing control perturbations (Olfactory receptor genes), while controlling for batch as a covariate. Each of the 4 guides per gene were pooled and counted as a single perturbation for this analysis. We performed shrinkage on the log-fold-changes by applying ebnm to the flattened log-fold-change matrix, assuming a point-normal prior. To assess false positive rates of the differential expression results, we generated 500 artificial perturbations by sampling random quartets of Olfactory receptor genes. Defining differential expressed genes (DEGs) using cutoffs of 5% FDR and |shrunken log2FC| &ge; log2(1.5), 471 (of 500) artificial perturbations had 0 DEGs, while 25 artificial perturbations had 1 DEG, and 4 had 2 DEGs. By contrast, the true perturbations had a median of 193 DEGs (IQR 56&ndash;516.5 DEGs).</p>
+      <p>Following the differential expression analysis, we processed the data similarly to the <a href="https://arxiv.org/abs/2502.21290" target="_blank" rel="noopener">PerturbQA</a> format, except with ternary labels. Differential expressed genes were determined as genes with FDR &lt; 0.05 and |shrunken log2FC| &ge; log2(1.5). Perturbations with less than 9 differentially expressed genes (DEGs) were excluded, and then remaining perturbations were separated into 80% train, 10% val, 10% test splits. The full 10,000 possible target genes are partitioned to be used in different splits with 60% train / 20% val / 20% test. For each perturbation, up to 9 of the top DEGs are added to the dataset. A similar number of non-DEGs are then added using a negative sampling strategy to ensure the dataset is balanced. There are 482 perturbations and 2,206 target genes in total with 386/48/48 perturbations and 1,570/331/305 target genes belonging to the final train / val / test splits, respectively.</p>
+    </div>
+
+    <div class="data-subsection">
+      <h3>Data details</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(400px,1fr)); gap:1.5rem; margin-top:1rem">
+        <figure style="margin:0; text-align:center">
+          <img src="img/degs_per_pert.png" alt="DEGs per perturbation" style="max-width:100%; border:1px solid var(--color-border); border-radius:8px">
+        </figure>
+        <figure style="margin:0; text-align:center">
+          <img src="img/gene_sample_counts.png" alt="Gene sample counts" style="max-width:100%; border:1px solid var(--color-border); border-radius:8px">
+        </figure>
+        <figure style="margin:0; text-align:center">
+          <img src="img/leakage_check.png" alt="Leakage check" style="max-width:100%; border:1px solid var(--color-border); border-radius:8px">
+        </figure>
+        <figure style="margin:0; text-align:center">
+          <img src="img/logfc_distributions.png" alt="Log-FC distributions" style="max-width:100%; border:1px solid var(--color-border); border-radius:8px">
+        </figure>
+      </div>
+    </div>
+
+    <div class="data-subsection">
+      <h3>Training data and splits</h3>
+      <ul class="content-list">
+        <li>We provide a small train set which is representative of the test set. Further, participants may train on any publicly available perturbation datasets (e.g., <em>PerturbQA</em> and other public resources).</li>
+        <li>We provide an online leaderboard which shows predictions on a <strong>public</strong> portion of the test set drawn from the same experimental pipeline as the rest of the data.</li>
+        <li>At the end of the competition, the <strong>private</strong> test set scores will be released. Final rankings are determined on the held-out private test set.</li>
+      </ul>
+    </div>
+
+    <div class="data-subsection">
+      <h3>Potential additional training data</h3>
+      <ul class="content-list">
+        <li><a href="https://github.com/genentech/PerturbQA" target="_blank" rel="noopener">https://github.com/genentech/PerturbQA</a></li>
+        <li><a href="https://huggingface.co/datasets/tahoebio/Tahoe-100M" target="_blank" rel="noopener">https://huggingface.co/datasets/tahoebio/Tahoe-100M</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Evaluation -->
+<section id="evaluation">
+  <div class="container">
+    <h2 class="section-title">Metrics / Evaluation</h2>
+    <p class="section-subtitle">Micro AUROC across two evaluation tasks</p>
+
+    <div class="prose">
+      <p>The competition will be held on <strong>Kaggle</strong>. A submission will consist of:</p>
+    </div>
+    <ol class="content-list" style="margin-bottom:1.5rem">
+      <li>A .txt file containing the predictions for the test set. Public leaderboard performance will be reported back.</li>
+      <li>Task-relevant metadata, such as reasoning traces, tokens used, and model parameters.</li>
+      <li>Task-relevant inputs, such as tool definitions (e.g., a python file) or prompts.</li>
+    </ol>
+
+    <div class="prose">
+      <p>Please see the <a href="https://github.com/Genentech/BioReasoningChallenge" target="_blank" rel="noopener">Github repo</a> for example submissions.</p>
+      <p>Submissions will be evaluated on:</p>
+    </div>
+    <ul class="content-list" style="margin-bottom:1.5rem">
+      <li><strong>Micro AUROC</strong> of (1) differential expression and (2) direction of change (the evaluation pipeline is inspired by <a href="https://arxiv.org/abs/2502.21290" target="_blank" rel="noopener">existing literature</a>). <strong>The average of those two metrics will be used to rank entries.</strong></li>
+    </ul>
+
+
+    <div class="prose">
+      <p>It is permissible to submit continuous probability values as predictions instead of 1 or 0.</p>
+      <p>Top-performing teams&rsquo; solutions (Top 5) will undergo <strong>manual assessment</strong> by domain experts and LLM agents. This serves as a validity check to identify and disqualify models that may engage in metric hacking.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Awards -->
+<section id="awards">
+  <div class="container">
+    <h2 class="section-title">Awards</h2>
+    <p class="section-subtitle">Recognition for top-performing teams</p>
+
+    <h3 style="font-size:1.15rem; font-weight:600; margin-bottom:0.75rem;">Per-track prizes (Tracks A, B, and C each)</h3>
+    <ul class="content-list" style="margin-bottom:1.5rem">
+      <li>1st place: <strong>$350</strong></li>
+      <li>2nd place: <strong>$150</strong></li>
+      <li>3rd place: <strong>$100</strong></li>
+    </ul>
+
+    <h3 style="font-size:1.15rem; font-weight:600; margin-bottom:0.75rem;">Special award</h3>
+    <ul class="content-list" style="margin-bottom:1.5rem">
+      <li>Most novel submission: <strong>$200</strong></li>
+    </ul>
+
+    <div class="prose">
+      <p><strong>Additionally, the top teams will be invited as co-authors</strong> to contribute their insights, experience, and findings to a manuscript prepared after the challenge and submitted to a high-profile venue.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Rules -->
+<section id="rules">
+  <div class="container">
+    <h2 class="section-title">Rules</h2>
+    <p class="section-subtitle">General policies and track-specific constraints</p>
+
+    <ul class="content-list" style="margin-bottom:1.5rem">
+      <li><strong>Overall, the challenge will follow a good-faith policy regarding cheating. This will be up to the discretion of the organizers. Please feel free to request any clarifications.</strong></li>
+      <li>Each submission must include reasoning traces, final answers, token usage, tool usage (if applicable), and model size/type information.</li>
+      <li>Participants may train on any publicly available, permissively licenced, perturbation datasets (e.g., PerturbQA and other public resources).</li>
+      <li>Participants should adhere to track-specific rules in terms of base model and parameters, token limitations, etc.</li>
+    </ul>
+
+    <div class="prose" style="margin-bottom:2rem">
+      <p><strong>Within the rules of each track, participants are encouraged to be creative in how they approach the problem.</strong> We expect strong solutions to explore the full design space of LLMs and agentic systems, including structured reasoning, prompt decomposition strategies, retrieval and knowledge integration, tool use, multi-agent workflows, and efficient fine-tuning. <strong>The challenge is intended not only to measure performance, but also to surface new ideas.</strong></p>
+    </div>
+
+    <div class="rules-tabs">
+      <button class="rules-tab active" data-panel="rules-a">Track A</button>
+      <button class="rules-tab" data-panel="rules-b">Track B</button>
+      <button class="rules-tab" data-panel="rules-c">Track C</button>
+    </div>
+
+    <div class="rules-panel active" id="rules-a">
+      <p>This track is designed to evaluate prompt optimization (e.g., few shot learning, context optimization, etc.) strategies. The LLM itself must not be fine-tuned.</p>
+      <ul>
+        <li>Fixed base LLM, <strong>GPT-OSS-120B</strong>, with no fine-tuning.
+          <ul style="margin-top:0.3rem">
+            <li>Enforced sampling parameters: <code>temperature=1.0</code>, <code>top_p=1.0</code>.</li>
+          </ul>
+        </li>
+        <li>Task format: Question-Specific Prompt + input question &rarr; output.</li>
+        <li>Maximum number of prompt tokens: <strong>4,096</strong> tokens (this constraint is intended to encourage creativity and prevent dumping information into the prompt).
+          <ul style="margin-top:0.3rem">
+            <li>The prompt cannot directly include the expected outputs.</li>
+          </ul>
+        </li>
+        <li>3 samples per question with seeds 42, 43, 44.</li>
+      </ul>
+    </div>
+
+    <div class="rules-panel" id="rules-b">
+      <p>This track is designed to evaluate multi-agent tool use / tool calling. Teams should design the best set of tools and multi-agent architecture to optimize the task.</p>
+      <ul>
+        <li>Fixed base LLM, <strong>GPT-OSS-120B</strong>, with no fine-tuning.
+          <ul style="margin-top:0.3rem">
+            <li>Enforced sampling parameters: <code>temperature=1.0</code>, <code>top_p=1.0</code>.</li>
+          </ul>
+        </li>
+        <li>Task format: General Prompt + tool file + input question &rarr; output.</li>
+        <li>Maximum number of distinct tools: <strong>100</strong>.</li>
+        <li>Maximum number of tool calls: <strong>250</strong>.</li>
+        <li>Require sharing traces for auditability.</li>
+        <li>Maximum number of prompt tokens: <strong>16,384</strong> tokens.</li>
+        <li>Allowed tools: retrieval from public data (GRN queries, GO/pathway lookup, model access), predictive models trained with public data, and multi-agent design.
+          <ul style="margin-top:0.3rem">
+            <li>Not allowed: no other LLMs outside GPT-OSS-120B.</li>
+            <li>Not allowed: training/finetuning ad-hoc models on competition data.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="rules-panel" id="rules-c">
+      <p>This track is designed to evaluate LLM finetuning (SFT, RL, etc.).</p>
+      <ul>
+        <li>Available open-source LLM to start with:
+          <ul style="margin-top:0.3rem">
+            <li>Open model <strong>&lt; 10B parameters</strong>.</li>
+          </ul>
+        </li>
+        <li>Any kind of finetuning technique allowed (SFT/LoRA, RL etc.).</li>
+        <li>Task format: General prompt + input question &rarr; output.</li>
+        <li>No tools, no web, and no external models allowed during inference.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- References -->
+<section id="references">
+  <div class="container">
+    <h2 class="section-title">References</h2>
+    <ol class="references-list">
+      <li><a href="https://www.cell.com/cell/fulltext/S0092-8674(24)01332-1" target="_blank" rel="noopener">https://www.cell.com/cell/fulltext/S0092-8674(24)01332-1</a></li>
+      <li><a href="https://arxiv.org/abs/2502.21290" target="_blank" rel="noopener">https://arxiv.org/abs/2502.21290</a></li>
+      <li><a href="https://www.biorxiv.org/content/10.1101/2025.08.18.670981v4" target="_blank" rel="noopener">https://www.biorxiv.org/content/10.1101/2025.08.18.670981v4</a></li>
+      <li><a href="https://arxiv.org/abs/2603.08095" target="_blank" rel="noopener">https://arxiv.org/abs/2603.08095</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- Organizers -->
+<section id="organizers">
+  <div class="container">
+    <h2 class="section-title">Organizers</h2>
+    <p class="section-subtitle">The team behind the challenge</p>
+    <div class="organizers-grid">
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">CE</div>
+        <h3>Carl Edwards</h3>
+        <p class="role">Senior AI Scientist, Genentech (BRAID)</p>
+        <a href="https://cnedwards.com/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">EH</div>
+        <h3>Ehsan Hajiramezanali</h3>
+        <p class="role">Principal AI Scientist, Genentech</p>
+        <a href="https://scholar.google.com/citations?hl=en&user=20I_DMoAAAAJ" target="_blank" rel="noopener">Scholar &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">TK</div>
+        <h3>Takamasa Kudo</h3>
+        <p class="role">Genentech</p>
+        <a href="https://scholar.google.com/citations?user=d1ZrZ6YAAAAJ&amp;hl=en" target="_blank" rel="noopener">Scholar &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">JK</div>
+        <h3>Jack Kamm</h3>
+        <p class="role">Statistician &amp; Bioinformaticist, Genentech</p>
+        <a href="https://jackkamm.github.io/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">HV</div>
+        <h3>Hugues Van Assel</h3>
+        <p class="role">Postdoc, Genentech</p>
+        <a href="https://huguesva.github.io/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">XL</div>
+        <h3>Xiner Li</h3>
+        <p class="role">Senior AI Scientist, Genentech</p>
+        <a href="https://hyanan16.github.io/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">JH</div>
+        <h3>Jan-Christian H&uuml;tter</h3>
+        <p class="role"></p>
+        <a href="https://www.jchuetter.com/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">GS</div>
+        <h3>Gabriele Scalia</h3>
+        <p class="role">Principal AI Scientist, Genentech</p>
+        <a href="https://www.linkedin.com/in/gabriele-scalia" target="_blank" rel="noopener">LinkedIn &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">RL</div>
+        <h3>Romain Lopez</h3>
+        <p class="role">Assistant Professor, NYU (Courant &amp; Biology)</p>
+        <a href="https://romain-lopez.github.io/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+
+      <div class="organizer-card">
+        <div class="organizer-avatar">SM</div>
+        <h3>Sara Mostafavi</h3>
+        <p class="role">Head of AI for Biology &amp; Translation, Genentech</p>
+        <a href="https://saramostafavi.github.io/" target="_blank" rel="noopener">Website &rarr;</a>
+      </div>
+      
+      <div class="organizer-card">
+        <div class="organizer-avatar">AR</div>
+        <h3>Aviv Regev</h3>
+        <p class="role">Head &amp; EVP, Genentech Research &amp; Early Development</p>
+        <a href="https://www.gene.com/scientists/our-scientists/aviv-regev" target="_blank" rel="noopener">Genentech &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>
+    BioReasoning Challenge 2026 &middot; MLGenX Workshop @ ICLR 2026 &middot;
+    <a href="https://github.com/Genentech/BioReasoningChallenge">GitHub</a> &middot;
+    Organized by <a href="https://www.gene.com/" target="_blank" rel="noopener">Genentech</a> &middot;
+    Contact: <a href="mailto:edwards.carl@gene.com">edwards.carl@gene.com</a>
+  </p>
+</footer>
+
+<script>
+// Mobile nav toggle
+document.getElementById('navToggle').addEventListener('click', function() {
+  document.getElementById('navLinks').classList.toggle('open');
+});
+// Close mobile nav on link click
+document.querySelectorAll('.nav-links a').forEach(function(a) {
+  a.addEventListener('click', function() {
+    document.getElementById('navLinks').classList.remove('open');
+  });
+});
+// Rules tabs
+document.querySelectorAll('.rules-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.rules-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.rules-panel').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

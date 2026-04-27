@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlgenx"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Helper package for the MLGenX PerturbPair competition"
+dependencies = [
+    "pandas",
+    "numpy",
+    "openai>=2.24.0",
+    "dspy>=3.1.3",
+]
+
+[project.optional-dependencies]
+train = [
+    "torch>=2.10.0",
+    "transformers>=5.3.0",
+    "peft>=0.18.1",
+    "trl>=0.29.0",
+    "datasets>=4.6.1",
+    "accelerate",
+]
+serve = [
+    "vllm>=0.16.0",
+]
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "train" },
+        { extra = "serve" },
+    ],
+]
+
+[tool.setuptools]
+packages = ["mlgenx"]

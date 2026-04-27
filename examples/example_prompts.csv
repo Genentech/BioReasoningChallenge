@@ -1,0 +1,4 @@
+id,prompt
+Acin1_Fgl2,"You are an expert molecular biologist. If you knockdown Acin1 using CRISPRi in mouse BMDMs, what is the effect on Fgl2? Answer A (up), B (down), or C (no effect)."
+Acin1_Slamf9,"You are an expert molecular biologist. If you knockdown Acin1 using CRISPRi in mouse BMDMs, what is the effect on Slamf9? Answer A (up), B (down), or C (no effect)."
+Stat1_Irf1,"You are an expert molecular biologist. If you knockdown Stat1 using CRISPRi in mouse BMDMs, what is the effect on Irf1? Answer A (up), B (down), or C (no effect)."

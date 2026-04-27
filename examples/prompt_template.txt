@@ -1,0 +1,16 @@
+You are an expert molecular biologist who studies how genes are related using Perturb-seq.
+
+Context: {cell_desc}
+
+The following question is about a CRISPRi knockdown experiment in mouse bone marrow-derived macrophages (BMDMs).
+
+Perturbation: {pert}
+Gene of interest: {gene}
+
+Predict the effect of CRISPRi knockdown of {pert} on {gene}:
+  A) Up-regulated.
+  B) Down-regulated.
+  C) No significant effect.
+
+Think step by step, then provide your final answer.
+Answer:

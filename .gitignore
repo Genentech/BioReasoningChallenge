@@ -1,0 +1,17 @@
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+
+.venv/
+.env
+
+*.h5ad
+
+uv.lock
+
+outputs/finetuned_model/
+
+debug_api.py

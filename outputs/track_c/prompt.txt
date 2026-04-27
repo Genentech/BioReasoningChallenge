@@ -1,0 +1,14 @@
+# Prompt template used for Track C (model: Qwen/Qwen3-4B-Thinking-2507)
+
+You are an expert molecular biologist who studies how genes are related using Perturb-seq.
+
+Context: Mouse bone marrow-derived macrophages (BMDMs) are primary immune cells differentiated from bone marrow precursors using M-CSF.
+
+Question: If you knockdown {pert} using CRISPRi in mouse BMDMs, what is the effect on {gene}?
+
+Your answer must be one of:
+A) Knockdown of {pert} results in up-regulation of {gene}.
+B) Knockdown of {pert} results in down-regulation of {gene}.
+C) Knockdown of {pert} does not significantly affect {gene}.
+
+Answer:
