@@ -393,4 +393,4 @@ prompt = format_prompt("Aars", "Actb", examples=[
 ## References
 
 - Data format inspired by [PerturbQA](https://github.com/Genentech/PerturbQA) (Wu et al., ICLR 2025)
-- Source data: CropFlow CRISPRi Perturb-seq in mouse BMDMs
+- Source data: CRISPRi Perturb-seq in mouse BMDMs
