@@ -6,6 +6,10 @@
 
 Predict gene expression changes from CRISPRi perturbations in mouse bone marrow-derived macrophages (BMDMs).
 
+## Website
+Please checkout [the website](https://genentech.github.io/BioReasoningChallenge/) for full details!
+
+
 ## Overview
 
 Participants are given (perturbation, gene) pairs and must predict a **ternary** effect on the target gene:
