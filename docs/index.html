@@ -50,7 +50,7 @@ nav {
   font-weight: 700; font-size: 1rem; color: #fff; text-decoration: none;
   letter-spacing: 0.02em;
 }
-.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links { display: flex; gap: 1rem; list-style: none; }
 .nav-links a {
   color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.875rem;
   font-weight: 500; transition: color 0.2s;
@@ -119,6 +119,22 @@ section:nth-child(even) { background: var(--color-bg-alt); }
 /* ── Prose paragraphs ── */
 .prose p { margin-bottom: 1rem; line-height: 1.7; }
 .prose p:last-child { margin-bottom: 0; }
+
+/* ── Winners ── */
+#winners { scroll-margin-top: 56px; }
+.winners-table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+.winners-table { width: 100%; min-width: 560px; border-collapse: collapse; }
+.winners-table caption { text-align: left; font-weight: 600; padding-bottom: 0.75rem; }
+.winners-table th, .winners-table td {
+  padding: 1rem; text-align: left; border: 1px solid var(--color-border);
+}
+.winners-table thead th { background: var(--color-primary); color: #fff; }
+.winners-table thead .winner-track-a { background: var(--color-accent-a); }
+.winners-table thead .winner-track-b { background: var(--color-accent-b); }
+.winners-table thead .winner-track-c { background: var(--color-accent-c); }
+.winners-table tbody th { white-space: nowrap; }
+.winners-table tbody tr:first-child { background: #edf5fb; font-weight: 600; }
+.previous-update { margin-bottom: 1rem; color: var(--color-text-muted); font-size: 0.9rem; }
 
 /* ── Track cards ── */
 .tracks-grid {
@@ -242,6 +258,7 @@ footer a:hover { color: #fff; }
     <a class="nav-brand" href="#">BioReasoning Challenge</a>
     <ul class="nav-links" id="navLinks">
       <li><a href="#news">News</a></li>
+      <li><a href="#winners">Winners</a></li>
       <li><a href="#overview">Overview</a></li>
       <li><a href="#tracks">Tracks</a></li>
       <li><a href="#data">Data</a></li>
@@ -282,10 +299,59 @@ footer a:hover { color: #fff; }
   </div>
 </header>
 
+<!-- Winners -->
+<section id="winners" aria-labelledby="winners-title">
+  <div class="container">
+    <h2 class="section-title" id="winners-title">Competition winners</h2>
+    <p class="section-subtitle">Congratulations to the winning teams across Tracks A, B, and C!</p>
+    <div class="prose">
+      <p>Thank you to everyone who participated in the MLGenX BioReasoning Challenge. We appreciate the time, creativity, and scientific thought that went into your submissions, and your patience during the review process.</p>
+    </div>
+    <div class="winners-table-wrap" role="region" aria-label="Winners by track and placement" tabindex="0">
+      <table class="winners-table">
+        <caption>Prize placements by track</caption>
+        <thead>
+          <tr>
+            <th scope="col">Place</th>
+            <th scope="col" class="winner-track-a">Track A</th>
+            <th scope="col" class="winner-track-b">Track B</th>
+            <th scope="col" class="winner-track-c">Track C</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">1st</th>
+            <td>Kyuhwan Cho</td>
+            <td>cellshift.bio</td>
+            <td>Kyuhwan Cho</td>
+          </tr>
+          <tr>
+            <th scope="row">2nd</th>
+            <td>Misha Shikhov</td>
+            <td>Danielle Lesin</td>
+            <td>mikelou1</td>
+          </tr>
+          <tr>
+            <th scope="row">3rd</th>
+            <td>Danielle Lesin</td>
+            <td>Kyuhwan Cho</td>
+            <td>zulfikar.khalwaniev</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p><strong>How placements were determined:</strong> Following review, the organizers adopted relaxed eligibility criteria allowing hybrid predictors, calibration, ensembling, and test-set-wide post-processing, while retaining the requirement to use an eligible language model and the prohibition on restricted data. These prize placements reflect that organizer review and may differ from the original Kaggle leaderboards. They should not be interpreted as confirmation that every winning entry satisfied all original track-specific inference restrictions.</p>
+      <p>Congratulations again to the winners, and thank you to all participants for contributing to the challenge!</p>
+    </div>
+  </div>
+</section>
+
 <!-- News -->
 <section id="news">
   <div class="container">
     <h2 class="section-title">Competition update: submission validation and next steps</h2>
+    <p class="previous-update">Earlier update, retained for reference. See the <a href="#winners">competition winners above</a> for the prize placements.</p>
     <div class="prose">
       <p>Thank you to everyone who participated in the MLGenX BioReasoning Challenge! We are currently validating submissions across Tracks A, B, and C before confirming the final results.</p>
 
